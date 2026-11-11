@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 110" width="520" height="110" role="img" aria-label="望崽宠乐园"><title>望崽宠乐园</title><desc>望崽宠乐园标准横版品牌标志：爪印加品牌字</desc>
+  <!-- paw mark -->
+  <g transform="translate(14,8) scale(0.94)">
+    <ellipse cx="42" cy="70" rx="30" ry="26" fill="#FFB020"/>
+    <ellipse cx="14" cy="38" rx="12" ry="15" fill="#FFB020" transform="rotate(-18 14 38)"/>
+    <ellipse cx="70" cy="38" rx="12" ry="15" fill="#FFB020" transform="rotate(18 70 38)"/>
+    <ellipse cx="30" cy="18" rx="11" ry="14" fill="#FFB020" transform="rotate(-6 30 18)"/>
+    <ellipse cx="54" cy="18" rx="11" ry="14" fill="#FFB020" transform="rotate(6 54 18)"/>
+    <path d="M 34 74 q 8 -8 16 0 q 8 8 16 0 q -8 14 -16 14 q -8 0 -16 -14 z" fill="#a65334" opacity="0.9"/>
+    <circle cx="42" cy="56" r="4" fill="#a65334" opacity="0.55"/>
+  </g>
+  <!-- wordmark -->
+  <text x="112" y="62" font-family="'Noto Serif SC','Source Han Serif SC','Songti SC','STSong','SimSun',serif" font-size="44" font-weight="700" fill="#29231d">望崽宠乐园</text>
+  <text x="114" y="90" font-family="'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="14" letter-spacing="4" fill="#a65334">WANGZAI PET PARADISE</text>
+</svg>

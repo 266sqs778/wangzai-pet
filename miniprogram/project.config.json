@@ -1,5 +1,5 @@
 {
-  "description": "灯灯桌宠 · 免费定制与分享小程序",
+  "description": "望崽宠乐园 · 免费定制与分享小程序",
   "packOptions": {
     "ignore": [
       { "type": "folder", "value": ".workbuddy" }
@@ -15,6 +15,6 @@
   },
   "compileType": "miniprogram",
   "appid": "touristappid",
-  "projectname": "dengdeng-pet",
+  "projectname": "wangzai-pet",
   "miniprogramRoot": "./"
 }

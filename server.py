@@ -34,7 +34,7 @@ RUNTIME = ROOT / "runtime.json"
 PORT = 8765
 
 DEFAULT_CONFIG = {
-    "name": "灯灯",
+    "name": "望崽",
     "species": "cat",
     "size": 220,
     "speed": 2,

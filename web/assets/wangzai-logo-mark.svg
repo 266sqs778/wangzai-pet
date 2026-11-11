@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 110" width="120" height="110" role="img" aria-label="望崽宠乐园"><title>望崽宠乐园</title><desc>望崽宠乐园纯图形品牌标志</desc>
+  <ellipse cx="60" cy="74" rx="32" ry="27" fill="#FFB020"/>
+  <ellipse cx="22" cy="42" rx="12" ry="15" fill="#FFB020" transform="rotate(-18 22 42)"/>
+  <ellipse cx="98" cy="42" rx="12" ry="15" fill="#FFB020" transform="rotate(18 98 42)"/>
+  <ellipse cx="41" cy="20" rx="11" ry="14" fill="#FFB020" transform="rotate(-6 41 20)"/>
+  <ellipse cx="79" cy="20" rx="11" ry="14" fill="#FFB020" transform="rotate(6 79 20)"/>
+  <path d="M 50 79 q 10 -9 20 0 q 10 9 20 0 q -10 15 -20 15 q -10 0 -20 -15 z" fill="#a65334" opacity="0.9"/>
+  <circle cx="60" cy="60" r="4.5" fill="#a65334" opacity="0.55"/>
+</svg>

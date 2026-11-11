@@ -1,4 +1,4 @@
-﻿# 灯灯桌宠 - 零依赖 Windows 运行时
+﻿# 望崽宠乐园 - 零依赖 Windows 运行时
 # Requires: Windows 10/11 with PowerShell 5.1 and .NET Framework (both built in).
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -8,7 +8,7 @@ $root = $PSScriptRoot
 $cfgFile = Join-Path $root 'pet-config.json'
 $petDir = Join-Path $root 'assets\pet'
 if (-not (Test-Path -LiteralPath $cfgFile)) {
-  [System.Windows.Forms.MessageBox]::Show('pet-config.json is missing. Please unzip the whole pet package.', 'Dengdeng Pet') | Out-Null
+  [System.Windows.Forms.MessageBox]::Show('pet-config.json is missing. Please unzip the whole pet package.', 'Wangzai Pet') | Out-Null
   exit 1
 }
 
@@ -27,7 +27,7 @@ if (Test-Path -LiteralPath $petDir) {
   }
 }
 if ($script:keys.Count -eq 0) {
-  [System.Windows.Forms.MessageBox]::Show('No sprite found in assets\pet.', 'Dengdeng Pet') | Out-Null
+  [System.Windows.Forms.MessageBox]::Show('No sprite found in assets\pet.', 'Wangzai Pet') | Out-Null
   exit 1
 }
 

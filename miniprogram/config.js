@@ -13,7 +13,7 @@ const SPECIES = [
 ];
 
 const DEFAULT_CONFIG = {
-  name: '灯灯',
+  name: '望崽',
   species: 'cat',
   size: 220,
   speed: 2,
@@ -46,7 +46,7 @@ function buildShareUrl(c) {
   const parts = [
     'sharecode=' + SHARE_CODE,
     's=' + encodeURIComponent(c.species || 'cat'),
-    'n=' + encodeURIComponent(c.name || '灯灯'),
+    'n=' + encodeURIComponent(c.name || '望崽'),
     'z=' + (c.size || 220),
     'v=' + (c.speed || 2),
     'a=' + (c.auto ? 1 : 0),

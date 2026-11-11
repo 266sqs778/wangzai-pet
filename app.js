@@ -66,7 +66,7 @@
     const poses = SPRITES[species] || SPRITES.cat;
     previewImg.src = spriteUrl(poses[action] || poses.idle) + (species === 'my' ? '?t=' + Date.now() : '');
     $('#consolePetImg').src = previewImg.src;
-    $('#previewTag').textContent = `${$('#petName').value.trim() || '灯灯'} 在陪你`;
+    $('#previewTag').textContent = `${$('#petName').value.trim() || '望崽'} 在陪你`;
     $('#petSpecies').value = species;
     $$('.chip').forEach(c => c.classList.toggle('is-active', c.dataset.species === species));
     $$('.gallery-card').forEach(c => c.classList.toggle('is-active', c.dataset.species === species));
@@ -201,7 +201,7 @@
   }
   function collectConfig() {
     return {
-      name: $('#petName').value.trim() || '灯灯',
+      name: $('#petName').value.trim() || '望崽',
       species: $('#petSpecies').value,
       size: +$('#petSize').value,
       speed: +$('#petSpeed').value,
@@ -239,7 +239,7 @@
     if (!cfg) return;
     syncGuard = true;
     const set = (id, v) => { const el = $(id); if (el && document.activeElement !== el) el.value = v; };
-    set('#petName', cfg.name || '灯灯');
+    set('#petName', cfg.name || '望崽');
     set('#petSpecies', cfg.species || 'cat');
     set('#petSize', cfg.size || 220);
     set('#petSpeed', cfg.speed || 2);
@@ -264,7 +264,7 @@
       $('#opacityValue').textContent = Math.round(+$('#petOpacity').value * 100) + '%';
       const sp = $('#petSpecies').value;
       if (sp !== state.species) { state.species = sp; updatePreview(sp, 'idle'); }
-      $('#previewTag').textContent = `${$('#petName').value.trim() || '灯灯'} 在陪你`;
+      $('#previewTag').textContent = `${$('#petName').value.trim() || '望崽'} 在陪你`;
       sendConfig(collectConfig());
     });
   });
@@ -272,7 +272,7 @@
   $$('.action-btn').forEach(btn => btn.addEventListener('click', () => {
     const action = btn.dataset.action;
     sendCommand(action, action === 'hello' ? '汪！我在～' : '').catch(() => toast('命令没送出去，先启动本地服务'));
-    if (state.running) toast(`已让 ${$('#petName').value.trim() || '灯灯'} 去${btn.textContent.trim().split(/\s+/).pop()}`);
+    if (state.running) toast(`已让 ${$('#petName').value.trim() || '望崽'} 去${btn.textContent.trim().split(/\s+/).pop()}`);
   }));
 
   $('#sayBtn').addEventListener('click', () => {

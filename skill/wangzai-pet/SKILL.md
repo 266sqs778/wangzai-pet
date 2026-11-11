@@ -1,10 +1,10 @@
 ---
-name: dengdeng-pet
+name: wangzai-pet
 description: 复刻桌宠官网、搭建免费在线定制台、导出免安装的 Windows 桌宠包（BAT 与 EXE）、部署成可传播链接、生成微信小程序并挂到微信公众号。当用户提出「桌面宠物 / 桌宠 / 把宠物带到电脑桌面 / 宠物照片变桌宠 / 桌宠 EXE 或 BAT 分发 / 桌宠定制网站上线 / 桌宠小程序 / 公众号挂小程序 / 桌宠服务 skill 包」等需求时使用。
 agent_created: true
 ---
 
-# 灯灯桌宠服务 Skill
+# 望崽宠乐园服务 Skill
 
 把「宠物照片 → 会动的桌面小伙伴」做成一条完整可交付的服务：官网门面、浏览器内定制、零依赖 Windows 桌宠包、在线分享链接、微信小程序引流、公众号挂载，以及全部源码与文档。
 
@@ -22,7 +22,7 @@ agent_created: true
 | `assets/site/` | 完整静态站点模板：`index.html` / `styles.css` / `app.js` / `pack.js` / `runtime.js` / `export.js` + `assets/`。直接复制即可运行或部署 |
 | `assets/pet/*.png` | 透明桌宠精灵图（7 种形象 × 多个动作，含 `_left` 镜像） |
 | `scripts/make_bat_pack.py` | 命令行生成零依赖 BAT 桌宠包，网页导出逻辑的 CLI 等价实现 |
-| `scripts/build_exe.py` | 编译通用 `dengdeng-pet.exe` 并打成分发 zip |
+| `scripts/build_exe.py` | 编译通用 `wangzai-pet.exe` 并打成分发 zip |
 | `scripts/win_pet.ps1` | Windows PowerShell 桌宠运行时模板（UTF-8 BOM） |
 | `scripts/build_assets.py` | 从原图生成透明精灵图 |
 | `scripts/desktop_pet.py` / `server.py` / `bundle_pet.py` | 功能完整的 Python 桌宠与本地控制台 |
@@ -52,7 +52,7 @@ agent_created: true
 ```bash
 python scripts/make_bat_pack.py --name 团子 --species cat --size 220 --speed 2 --out dist/tuanzi.zip
 python scripts/make_bat_pack.py --photo my-cat.jpg --name 咪咪 --out dist/mimi.zip
-python scripts/build_exe.py --out dist/dengdeng-pet-exe.zip
+python scripts/build_exe.py --out dist/wangzai-pet-exe.zip
 python scripts/validate_all.py
 ```
 

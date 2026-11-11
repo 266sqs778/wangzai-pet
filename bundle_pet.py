@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Frozen entry point for the distributable dengdeng-pet.exe.
+"""Frozen entry point for the distributable wangzai-pet.exe.
 
 The EXE is generic: it reads pet-config.json and assets/pet/*.png from the
 folder that contains the executable. That means one compiled binary can be

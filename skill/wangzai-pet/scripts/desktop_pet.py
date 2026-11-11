@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Dengdeng desktop pet - a transparent, always-on-top window for Windows.
+Wangzai desktop pet - a transparent, always-on-top window for Windows.
 
 Zero third-party runtime deps: tkinter + Pillow (Pillow is only used to build
 the sprite bitmaps). It polls pet-config.json, so the local web console can
@@ -38,7 +38,7 @@ WARM = (246, 238, 226, 255)    # edge matte, keeps fur from getting a dark fring
 BUBBLE_H = 54
 
 DEFAULTS = {
-    "name": "灯灯", "species": "cat", "size": 220, "speed": 2,
+    "name": "望崽", "species": "cat", "size": 220, "speed": 2,
     "opacity": 1.0, "topmost": True, "auto": True, "visible": True,
     "action": "idle", "seq": 0, "command": {"type": "idle"},
     "lines": ["在呢，一直都在。", "今天也要好好工作呀～", "摸摸我就有精神啦！"],
@@ -264,7 +264,7 @@ class DesktopPet:
 
     def on_menu(self, event) -> None:
         menu = tk.Menu(self.root, tearoff=0, font=("Microsoft YaHei", 10))
-        menu.add_command(label=f"  {self.cfg.get('name', '灯灯')}  ·  摸摸我", command=lambda: self.do_action("happy"))
+        menu.add_command(label=f"  {self.cfg.get('name', '望崽')}  ·  摸摸我", command=lambda: self.do_action("happy"))
         menu.add_separator()
         for key in ("idle", "walk", "stretch", "groom", "sleep"):
             menu.add_command(label="  " + ACTION_LABELS[key], command=lambda k=key: self.do_action(k))
@@ -307,7 +307,7 @@ class DesktopPet:
             self._settings_win.lift()
             return
         win = tk.Toplevel(self.root)
-        win.title("灯灯桌宠 · 设置")
+        win.title("望崽宠乐园 · 设置")
         win.geometry("330x420")
         win.configure(bg="#fcf8f0")
         win.attributes("-topmost", True)
@@ -318,7 +318,7 @@ class DesktopPet:
                      font=("Microsoft YaHei", 10)).grid(row=r, column=0, sticky="w", padx=16, pady=6)
             return widget_factory(r)
 
-        name_var = tk.StringVar(value=str(self.cfg.get("name", "灯灯")))
+        name_var = tk.StringVar(value=str(self.cfg.get("name", "望崽")))
         row("名字", lambda r: tk.Entry(win, textvariable=name_var, width=22, font=("Microsoft YaHei", 10)), 0)
 
         species_var = tk.StringVar(value=str(self.cfg.get("species", "cat")))

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""One-shot validation for the dengdeng-pet skill package.
+"""One-shot validation for the wangzai-pet skill package.
 
     python scripts/validate_all.py
 
@@ -46,7 +46,7 @@ def main() -> None:
 
     # 2. site files
     site_files = ["index.html", "styles.css", "app.js", "pack.js", "runtime.js", "export.js",
-                  "assets/pet/cat_idle.png", "assets/dengdeng-logo-mark.svg"]
+                  "assets/pet/cat_idle.png", "assets/wangzai-logo-mark.svg"]
     missing = [f for f in site_files if not (SITE / f).exists()]
     check("static site files", not missing, "missing: " + ", ".join(missing) if missing else f"{len(site_files)} files")
 

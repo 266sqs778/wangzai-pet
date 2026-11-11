@@ -27,7 +27,7 @@ https://<host>/?sharecode=<code>&s=cat&n=%E5%9B%A2%E5%AD%90&z=240&v=3&a=1&t=1&l=
 
 `app.js` 的 `restoreFromUrl()` 用 `URLSearchParams` 读取参数，做范围夹取与缺省回退：
 
-- 未知 `s` → `cat`；空名字 → `灯灯`；
+- 未知 `s` → `cat`；空名字 → `望崽`；
 - `z` 夹到 100–420，`v` 夹到 1–8；
 - `a` / `t` 只有显式 `0` 才关闭；
 - `l` 按 `|` 切分，最多 12 条；

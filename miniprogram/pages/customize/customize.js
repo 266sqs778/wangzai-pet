@@ -48,7 +48,7 @@ Page({
   },
   save() {
     const cfg = Object.assign({}, this.data.cfg);
-    cfg.name = (cfg.name || '').trim() || '灯灯';
+    cfg.name = (cfg.name || '').trim() || '望崽';
     C.saveConfig(cfg);
     wx.navigateTo({ url: '/pages/preview/preview' });
   },

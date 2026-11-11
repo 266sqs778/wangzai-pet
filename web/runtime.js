@@ -3,7 +3,7 @@
 (function (global) {
   'use strict';
 
-  const WIN_PET_PS1 = String.raw`# 灯灯桌宠 - 零依赖 Windows 运行时
+  const WIN_PET_PS1 = String.raw`# 望崽宠乐园 - 零依赖 Windows 运行时
 # Requires: Windows 10/11 with PowerShell 5.1 and .NET Framework (both built in).
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -13,7 +13,7 @@ $root = $PSScriptRoot
 $cfgFile = Join-Path $root 'pet-config.json'
 $petDir = Join-Path $root 'assets\pet'
 if (-not (Test-Path -LiteralPath $cfgFile)) {
-  [System.Windows.Forms.MessageBox]::Show('pet-config.json is missing. Please unzip the whole pet package.', 'Dengdeng Pet') | Out-Null
+  [System.Windows.Forms.MessageBox]::Show('pet-config.json is missing. Please unzip the whole pet package.', 'Wangzai Pet') | Out-Null
   exit 1
 }
 
@@ -32,7 +32,7 @@ if (Test-Path -LiteralPath $petDir) {
   }
 }
 if ($script:keys.Count -eq 0) {
-  [System.Windows.Forms.MessageBox]::Show('No sprite found in assets\pet.', 'Dengdeng Pet') | Out-Null
+  [System.Windows.Forms.MessageBox]::Show('No sprite found in assets\pet.', 'Wangzai Pet') | Out-Null
   exit 1
 }
 
@@ -177,7 +177,7 @@ $script:bubbleUntil = [Environment]::TickCount + 3200
 `;
 
   const START_BAT = String.raw`@echo off
-title Dengdeng Desktop Pet
+title Wangzai Desktop Pet
 cd /d "%~dp0"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0win_pet.ps1"
 if errorlevel 1 (
@@ -187,7 +187,7 @@ if errorlevel 1 (
 )
 `;
 
-  const README_TXT = String.raw`灯灯桌宠 · 使用说明
+  const README_TXT = String.raw`望崽宠乐园 · 使用说明
 ========================================
 
 1. 请先【解压整个压缩包】，不要直接在压缩软件里双击运行。
@@ -203,7 +203,7 @@ if errorlevel 1 (
 完全离线运行：不需要 Python、不需要安装任何软件、不联网、不上传照片。
 若被杀毒软件误报，请添加信任 PowerShell 脚本（本包只做本机窗口显示）。
 
-本包由「灯灯桌宠 · 免费定制」网页生成，可自由分享给朋友。
+本包由「望崽宠乐园 · 免费定制」网页生成，可自由分享给朋友。
 `;
 
   global.PET_RUNTIME = {

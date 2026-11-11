@@ -14,14 +14,14 @@ if "%REPO%"=="" (
 if not exist ".git" (
   echo Initialising local repository...
   git init
-  git config user.name "dengdeng-pet"
+  git config user.name "wangzai-pet"
   git config user.email "pet@localhost"
   git add -A
   git commit -m "Initial commit: desktop pet service (site, BAT/EXE packs, mini program, skill)"
 )
 
 git config user.name >nul 2>&1
-if errorlevel 1 git config user.name "dengdeng-pet"
+if errorlevel 1 git config user.name "wangzai-pet"
 git config user.email >nul 2>&1
 if errorlevel 1 git config user.email "pet@localhost"
 

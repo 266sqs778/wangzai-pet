@@ -2,7 +2,7 @@ const config = require('./config.js');
 
 App({
   globalData: {
-    appName: '灯灯桌宠',
+    appName: '望崽宠乐园',
     site: config.SITE_BASE,
   },
   onLaunch() {

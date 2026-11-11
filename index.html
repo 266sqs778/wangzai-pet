@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>灯灯桌宠 · 把你家宠物，带到电脑桌面陪伴你</title>
+<meta name="description" content="上传一张清晰照片，把宠物做成会动的桌面小伙伴。本地复刻演示版，带完整桌宠控制台。" />
+<link rel="icon" type="image/svg+xml" href="assets/dengdeng-logo-mark.svg" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="#top" aria-label="灯灯桌宠首页">
+      <img src="assets/dengdeng-logo-horizontal.svg" alt="灯灯桌宠" />
+    </a>
+    <nav class="nav">
+      <a href="#gallery">大家做好的宠物</a>
+      <a href="#stories">主人分享</a>
+      <a href="#how">怎么做</a>
+    </nav>
+    <div class="header-actions">
+      <span class="link-status" id="linkStatus" title="与本地桌宠服务的连接状态"><i></i><span>未连接</span></span>
+      <button class="btn btn-primary btn-sm" id="openConsole">打开控制台 <span aria-hidden="true">↗</span></button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero container">
+    <div class="hero-copy">
+      <span class="eyebrow">桌面陪伴 · 一对一定制</span>
+      <h1>把你家宠物，<br />带到电脑桌面 <span class="clay">陪伴你</span>。</h1>
+      <p class="lede">上传一张清晰照片，选择喜欢的动作，把它做成会动的桌面小伙伴，陪你工作、陪你发呆。</p>
+
+      <div class="hero-cta">
+        <button class="btn btn-primary" data-open-console>定制我的宠物</button>
+        <a class="btn btn-ghost" href="#how">先看本领 <span aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="platforms">
+        <span class="platform"><img src="assets/windows.svg" alt="" /> Windows 10 / 11</span>
+        <span class="platform"><img src="assets/apple.svg" alt="" /> macOS</span>
+        <span class="platform-note">支持多宠一次制作 · 永久有效</span>
+      </div>
+
+      <div class="species-strip">
+        <span class="species-strip__label">选一只先试试：</span>
+        <button class="chip" data-species="cat">🐈 定制猫咪</button>
+        <button class="chip" data-species="dog">🐕 定制狗狗</button>
+        <button class="chip" data-species="rabbit">🐇 定制兔子</button>
+        <button class="chip" data-species="chinchilla">🐭 定制龙猫</button>
+        <button class="chip" data-species="hamster">🐹 定制仓鼠</button>
+        <button class="chip" data-species="bird">🐦 定制小鸟</button>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="desktop-window">
+        <div class="desktop-window__bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="window-title">我的桌面 · 实时预览</span>
+          <span class="window-tag" id="previewTag">灯灯 在陪你</span>
+        </div>
+        <div class="desktop-screen" id="desktopScreen">
+          <div class="desktop-icons" aria-hidden="true">
+            <span><b>📁</b>工作</span><span><b>🗒️</b>待办</span><span><b>🎵</b>歌单</span>
+          </div>
+          <div class="desktop-note" id="desktopNote">拖我一下，或者点我摸摸 ✋</div>
+          <div class="preview-pet" id="previewPet" title="拖动我 / 点我摸摸">
+            <img id="previewPetImg" src="assets/pet/cat_idle.png" alt="桌面宠物预览" draggable="false" />
+            <div class="preview-bubble" id="previewBubble">在呢，一直都在。</div>
+          </div>
+          <div class="desktop-taskbar" aria-hidden="true"><span class="tb-start">⊞</span><span class="tb-time" id="tbTime">22:11</span></div>
+        </div>
+      </div>
+      <p class="hero-visual__hint">↑ 这是网页里的预览。点右上角「打开控制台」，就能把它真正放到你的桌面上。</p>
+    </div>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  <section class="section" id="gallery">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">欣赏一下大家做好的宠物吧</span>
+          <h2>可爱是人类的共享资源。</h2>
+        </div>
+        <p>每一只都来自主人上传的真实照片。<br />点一下，就能让它变成你的桌宠。</p>
+      </div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ STORIES ============ -->
+  <section class="section section--tint" id="stories">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">主人分享评价</span>
+          <h2>看看宝宝们在桌面上的真实表现。</h2>
+        </div>
+        <p>它不占地方，<br />却总在角落里陪着你。</p>
+      </div>
+      <div class="stories-grid">
+        <article class="story-card">
+          <div class="story-media">
+            <img src="assets/home-process-cat.webp" alt="靠着休息的橘猫桌宠" />
+            <span class="play-badge" aria-hidden="true">▶</span>
+            <span class="platform-badge">小红书</span>
+          </div>
+          <div class="story-body">
+            <h3>上班 人会想念咪吗？</h3>
+            <p class="story-author">奶茶妹是笨蛋猪🐷</p>
+            <a class="text-link" href="https://www.xiaohongshu.com/explore/6a8c08870000000038001cbd" target="_blank" rel="noopener">查看原作品 <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+        <article class="story-card">
+          <div class="story-media">
+            <img src="assets/cat-groom-poster.webp" alt="趴着舔毛的虎斑猫桌宠" />
+            <span class="play-badge" aria-hidden="true">▶</span>
+            <span class="platform-badge">抖音</span>
+          </div>
+          <div class="story-body">
+            <h3>下一辈子，还做主人的兔兔好吗？</h3>
+            <p class="story-quote">只是想到这冗长的一生再难与你相见，难免哽咽。#兔子 #桌面宠物 #灯灯桌宠 #思念</p>
+            <p class="story-author">白糖喵小哭包的日记</p>
+            <a class="text-link" href="https://www.douyin.com/video/7672350051422719267" target="_blank" rel="noopener">查看原作品 <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW ============ -->
+  <section class="section" id="how">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <div>
+          <span class="eyebrow">怎么做</span>
+          <h2>只需三步，把它带到桌面。</h2>
+        </div>
+        <p>你不需要懂技术。<br />上传一张照片，我们处理剩下的一切。</p>
+      </div>
+
+      <div class="how-grid">
+        <article class="how-card">
+          <div class="how-num">01</div>
+          <h3>挑动作并下单</h3>
+          <p class="text-soft"><b>选择喜欢的本领</b> · 先看动作</p>
+          <div class="pose-grid">
+            <button class="pose" data-action="stretch"><img src="assets/cat-stretch-poster.webp" alt="伸懒腰" /><span>伸懒腰</span></button>
+            <button class="pose" data-action="groom"><img src="assets/cat-groom-poster.webp" alt="舔毛毛" /><span>舔毛毛</span></button>
+            <button class="pose" data-action="idle"><img src="assets/cat-think-poster.webp" alt="想事情" /><span>想事情</span></button>
+          </div>
+          <div class="how-foot"><span>已选 <b id="poseCount">3</b> 个本领</span><span class="mini-hint">点击可让桌宠做这个动作</span></div>
+        </article>
+
+        <article class="how-card">
+          <div class="how-num">02</div>
+          <h3>上传照片并制作</h3>
+          <p class="text-soft"><b>它的真实模样</b> · 下单后</p>
+          <div class="upload-frame">
+            <img src="assets/process-upload-cat.png" alt="清晰的宠物照片示例" />
+            <span class="upload-check">照片已上传 ✓</span>
+          </div>
+          <div class="how-foot"><span>清晰的照片</span><button class="text-link" data-open-console>上传我家照片 <span aria-hidden="true">↗</span></button></div>
+        </article>
+
+        <article class="how-card how-card--accent">
+          <div class="how-num">03</div>
+          <h3>制作完成，导入桌面</h3>
+          <p class="text-soft"><b>它来陪你啦</b> · Windows / Mac</p>
+          <div class="finish-frame">
+            <img src="assets/home-process-cat.webp" alt="靠着休息的橘猫桌宠" />
+          </div>
+          <button class="btn btn-primary btn-block" id="importDesktop">下载桌宠包 · 导入桌面 <span aria-hidden="true">↗</span></button>
+          <p class="how-foot how-foot--center">不用下载，本地一键直达</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing">
+    <div class="container closing-inner">
+      <div>
+        <span class="eyebrow">现在就让它来陪你</span>
+        <h2>它已经在桌面等你了。</h2>
+        <p>拖动它、摸摸它、给它改名字，或者换成你家那只真的。</p>
+      </div>
+      <button class="btn btn-light" data-open-console>打开控制台，接管一切 <span aria-hidden="true">→</span></button>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="assets/dengdeng-logo-horizontal.svg" alt="灯灯桌宠" />
+        <p>上传你家宠物的照片，制作保留可见外观特征的桌面小伙伴。</p>
+        <span class="footer-note">品牌说明：原 Desktop Pet Studio / 桌宠工作室现已升级为灯灯桌宠。</span>
+      </div>
+      <div class="footer-col">
+        <h5>控制台</h5>
+        <button class="footer-link" data-open-console>领养控制台</button>
+        <button class="footer-link" id="footerLaunch">启动桌宠</button>
+        <button class="footer-link" id="footerQuit">让它休息</button>
+      </div>
+      <div class="footer-col">
+        <h5>产品</h5>
+        <a class="footer-link" href="#gallery">宠物照片变桌宠</a>
+        <a class="footer-link" href="#how">三步制作</a>
+        <a class="footer-link" href="#stories">主人分享</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 灯灯桌宠 · 本地复刻演示（非官方，仅用于个人把玩）</span>
+      <span>所有形象与设置都保存在本机 · 数据不出电脑</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ CONSOLE ============ -->
+<div class="console-overlay" id="consoleOverlay" hidden></div>
+<aside class="console" id="console" aria-label="领养控制台" hidden>
+  <div class="console-head">
+    <div>
+      <span class="eyebrow">领养控制台</span>
+      <h2>这只，归你管。</h2>
+    </div>
+    <button class="icon-btn" id="closeConsole" aria-label="关闭控制台">✕</button>
+  </div>
+
+  <div class="console-body">
+    <div class="status-row" id="statusRow">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">正在连接本地桌宠服务…</span>
+      <button class="text-link" id="launchBtn">启动</button>
+    </div>
+
+    <div class="offline-tip" id="offlineTip" hidden>
+      控制台需要本地服务。双击项目里的 <code>start.bat</code>，或在项目目录运行 <code>python server.py</code>，然后刷新页面。
+    </div>
+
+    <fieldset class="control-group">
+      <legend>基本</legend>
+      <label class="field"><span>它的名字</span><input id="petName" type="text" maxlength="12" value="灯灯" /></label>
+      <label class="field"><span>形象</span>
+        <select id="petSpecies">
+          <option value="cat">🐈 虎斑猫</option>
+          <option value="orange">🐈 橘猫</option>
+          <option value="dog">🐕 金毛</option>
+          <option value="rabbit">🐇 兔子</option>
+          <option value="chinchilla">🐭 龙猫</option>
+          <option value="hamster">🐹 仓鼠</option>
+          <option value="bird">🐦 小鸟</option>
+          <option value="my">📷 我家宠物（已上传）</option>
+        </select>
+      </label>
+      <div class="species-preview"><img id="consolePetImg" src="assets/pet/cat_idle.png" alt="当前形象" /></div>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>指挥它</legend>
+      <div class="action-grid">
+        <button class="action-btn" data-action="idle">😐 发呆</button>
+        <button class="action-btn" data-action="walk">🚶 散步</button>
+        <button class="action-btn" data-action="stretch">🙆 伸懒腰</button>
+        <button class="action-btn" data-action="groom">👅 舔毛毛</button>
+        <button class="action-btn" data-action="sleep">💤 睡觉</button>
+        <button class="action-btn" data-action="happy">💗 摸摸</button>
+        <button class="action-btn" data-action="feed">🍪 喂零食</button>
+        <button class="action-btn" data-action="hello">💬 叫一声</button>
+      </div>
+      <label class="field field--inline"><span>让它说</span><input id="sayText" type="text" maxlength="30" placeholder="例如：别熬太晚啦" /></label>
+      <button class="btn btn-outline btn-block" id="sayBtn">发送这句话</button>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>手感</legend>
+      <label class="slider-field"><span>大小 <b id="sizeValue">220</b></span><input id="petSize" type="range" min="100" max="420" step="10" value="220" /></label>
+      <label class="slider-field"><span>走动速度 <b id="speedValue">2</b></span><input id="petSpeed" type="range" min="1" max="8" step="1" value="2" /></label>
+      <label class="slider-field"><span>不透明度 <b id="opacityValue">100%</b></span><input id="petOpacity" type="range" min="0.4" max="1" step="0.05" value="1" /></label>
+      <div class="switch-row">
+        <label><input type="checkbox" id="petAuto" checked /> 自动换动作</label>
+        <label><input type="checkbox" id="petTopmost" checked /> 窗口置顶</label>
+      </div>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>换成你家那只</legend>
+      <p class="group-hint">上传一张光线好的正面照，即刻变成圆圆的宠物贴纸上桌；若是纯色背景，可勾选智能去背。</p>
+      <div class="upload-row">
+        <label class="upload-btn">选择照片<input id="photoInput" type="file" accept="image/*" hidden /></label>
+        <button class="btn btn-outline btn-sm" id="applyPhoto" disabled>应用到桌面</button>
+      </div>
+      <div class="photo-preview" id="photoPreview" hidden><img id="photoPreviewImg" alt="待上传的照片" /></div>
+      <label class="check-line"><input type="checkbox" id="keepBg" /> 纯色背景？试试智能去背（复杂背景请留空）</label>
+    </fieldset>
+
+    <fieldset class="control-group">
+      <legend>开关</legend>
+      <div class="power-row">
+        <button class="btn btn-outline btn-sm" id="toggleVisible">暂时藏起来</button>
+        <button class="btn btn-outline btn-sm" id="restartPet">重新启动</button>
+        <button class="btn btn-ghost btn-sm" id="quitPet">让它休息</button>
+      </div>
+    </fieldset>
+
+    <p class="console-foot">所有设置实时写入 <code>pet-config.json</code>，你也可以直接改这个文件。桌面宠物支持拖动、滚轮缩放、右键菜单。</p>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="app.js"></script>
+</body>
+</html>

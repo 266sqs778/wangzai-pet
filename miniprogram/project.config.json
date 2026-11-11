@@ -1,0 +1,20 @@
+{
+  "description": "灯灯桌宠 · 免费定制与分享小程序",
+  "packOptions": {
+    "ignore": [
+      { "type": "folder", "value": ".workbuddy" }
+    ],
+    "include": []
+  },
+  "setting": {
+    "bundle": false,
+    "es6": true,
+    "minified": true,
+    "postcss": true,
+    "urlCheck": true
+  },
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "projectname": "dengdeng-pet",
+  "miniprogramRoot": "./"
+}

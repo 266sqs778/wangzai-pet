@@ -1,0 +1,50 @@
+<view class="page">
+  <view class="hero">
+    <text class="eyebrow">桌面陪伴 · 免费定制 · 无需安装</text>
+    <view class="hero-title">把你家宠物，<text class="accent">带到电脑桌面</text></view>
+    <view class="hero-pet"><image src="/images/cat.png" mode="aspectFit" /></view>
+    <text class="hero-sub">选形象 · 起名字 · 生成专属桌宠包</text>
+    <text class="hero-note">完全免费，可把定制链接发给朋友</text>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="state">正在准备…</view>
+  <view wx:elif="{{status === 'error'}}" class="state">加载失败，请重新进入小程序</view>
+  <block wx:else>
+    <view class="entry" bindtap="goCustomize">
+      <view class="entry-icon">✦</view>
+      <view class="entry-body">
+        <text class="entry-title">免费定制我的桌宠</text>
+        <text class="entry-desc">挑形象、起名字、写一句台词</text>
+      </view>
+      <text class="entry-arrow">›</text>
+    </view>
+
+    <view class="entry" bindtap="goPreview">
+      <view class="entry-icon">↗</view>
+      <view class="entry-body">
+        <text class="entry-title">拿到电脑下载链接</text>
+        <text class="entry-desc">生成链接，发到电脑打开即可下载</text>
+      </view>
+      <text class="entry-arrow">›</text>
+    </view>
+
+    <view class="entry" bindtap="goGuide">
+      <view class="entry-icon">☰</view>
+      <view class="entry-body">
+        <text class="entry-title">挂到我的公众号</text>
+        <text class="entry-desc">快速注册、关联、菜单与资质说明</text>
+      </view>
+      <text class="entry-arrow">›</text>
+    </view>
+
+    <view class="card note-card">
+      <text class="h2">它是怎么跑到电脑上的？</text>
+      <text class="muted">在小程序里定制好形象和台词，把专属链接发到电脑浏览器打开，网页会在本机打包出一个免安装的桌宠包（BAT / EXE），解压双击就上桌。照片和设置都不上传服务器。</text>
+    </view>
+
+    <view class="card note-card">
+      <text class="h2">Windows 10 / 11</text>
+      <text class="muted">轻量包用 BAT 启动，几十 KB；EXE 完整版自带全套动作与右键菜单。两种都不需要装 Python。</text>
+    </view>
+  </block>
+</view>

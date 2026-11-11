@@ -1,0 +1,48 @@
+<view class="page">
+  <view class="card">
+    <text class="h2">① 挑一只先试试</text>
+    <text class="muted">也可以到网页上传自家照片，做成圆形贴纸</text>
+    <view class="species-grid">
+      <view wx:for="{{species}}" wx:key="key"
+            class="species {{item.key === cfg.species ? 'active' : ''}}"
+            data-key="{{item.key}}" bindtap="pickSpecies">
+        <text class="species-emoji">{{item.emoji}}</text>
+        <text class="species-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <text class="h2">② 给它起个名字</text>
+    <input class="input" value="{{cfg.name}}" maxlength="12" bindinput="onName" placeholder="例如：团子" />
+  </view>
+
+  <view class="card">
+    <text class="h2">③ 调一调手感</text>
+    <view class="slider-row">
+      <text class="slider-label">大小 {{cfg.size}}</text>
+      <slider min="100" max="420" step="10" value="{{cfg.size}}" bindchange="onSize" activeColor="#a65334" />
+    </view>
+    <view class="slider-row">
+      <text class="slider-label">走动速度 {{cfg.speed}}</text>
+      <slider min="1" max="8" step="1" value="{{cfg.speed}}" bindchange="onSpeed" activeColor="#a65334" />
+    </view>
+    <view class="switch-row"><text>自动换动作</text><switch checked="{{cfg.auto}}" bindchange="onAuto" color="#a65334" /></view>
+    <view class="switch-row"><text>窗口置顶</text><switch checked="{{cfg.topmost}}" bindchange="onTop" color="#a65334" /></view>
+  </view>
+
+  <view class="card">
+    <text class="h2">④ 写几句它会说的话</text>
+    <view class="line-row">
+      <input class="input line-input" value="{{draftLine}}" maxlength="30" bindinput="onDraft" placeholder="例如：别熬太晚啦" />
+      <view class="btn btn-outline add-btn" bindtap="addLine">添加</view>
+    </view>
+    <view class="chips">
+      <view wx:for="{{cfg.lines}}" wx:key="*this" class="chip" data-index="{{index}}" bindtap="removeLine">{{item}} ×</view>
+    </view>
+    <text wx:if="{{cfg.lines.length === 0}}" class="muted">还没有台词，加一句吧</text>
+  </view>
+
+  <view class="btn btn-primary btn-block" bindtap="save">生成我的定制链接</view>
+  <view class="btn btn-plain btn-block reset" bindtap="reset">恢复默认</view>
+</view>

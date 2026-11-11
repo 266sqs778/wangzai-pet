@@ -1,0 +1,19 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/customize/customize",
+    "pages/preview/preview",
+    "pages/guide/guide"
+  ],
+  "window": {
+    "navigationBarTitleText": "灯灯桌宠",
+    "navigationBarBackgroundColor": "#fcf8f0",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#fcf8f0",
+    "backgroundTextStyle": "light",
+    "enablePullDownRefresh": false
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

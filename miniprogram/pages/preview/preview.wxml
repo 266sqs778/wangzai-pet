@@ -1,0 +1,27 @@
+<view class="page">
+  <view class="card summary">
+    <text class="eyebrow">你的专属桌宠</text>
+    <view class="summary-name">{{cfg.name}}</view>
+    <text class="muted">{{speciesLabel}} · 大小 {{cfg.size}} · 速度 {{cfg.speed}} · {{lineCount}} 句台词</text>
+    <image class="preview-image" src="{{previewImage}}" mode="aspectFit" />
+  </view>
+
+  <view class="card">
+    <text class="h2">定制链接</text>
+    <text class="muted">链接里只带形象和文字设置，不含任何照片</text>
+    <text class="link" selectable="true">{{shareUrl}}</text>
+    <view class="btn btn-primary btn-block" bindtap="copyShare">复制定制链接</view>
+    <view class="btn btn-outline btn-block second" bindtap="copyPlain">只复制网站首页</view>
+  </view>
+
+  <view class="card">
+    <text class="h2">怎么把它弄到电脑上</text>
+    <view class="step"><text class="step-num">1</text><text class="step-text">复制链接，发给微信「文件传输助手」</text></view>
+    <view class="step"><text class="step-num">2</text><text class="step-text">在电脑浏览器打开，定制台会自动还原</text></view>
+    <view class="step"><text class="step-num">3</text><text class="step-text">点「免费生成桌宠包」，解压双击 start.bat</text></view>
+    <view class="step"><text class="step-num">4</text><text class="step-text">想用自家照片，在电脑网页里上传即可</text></view>
+  </view>
+
+  <button class="btn btn-plain btn-block share-btn" open-type="share">发给朋友一起定制</button>
+  <view class="btn btn-plain btn-block second" bindtap="goCustomize">回去改一改</view>
+</view>

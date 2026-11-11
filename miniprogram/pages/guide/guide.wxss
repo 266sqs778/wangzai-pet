@@ -1,0 +1,22 @@
+.card { display: flex; flex-direction: column; }
+.card .h1 { margin: 10rpx 0 12rpx; }
+.row { display: flex; align-items: flex-start; margin-top: 14rpx; }
+.num {
+  width: 40rpx; height: 40rpx; flex: none; border-radius: 12rpx;
+  background: #f7e3d4; color: #a65334; font-size: 23rpx;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 16rpx;
+}
+.txt { flex: 1; font-size: 26rpx; color: #6e6257; line-height: 1.7; }
+.tip {
+  display: block; margin-top: 20rpx; padding: 18rpx 20rpx;
+  background: #f4e8dc; border-radius: 16rpx;
+  font-size: 24rpx; color: #7a5942; line-height: 1.7;
+}
+.fact {
+  display: flex; align-items: flex-start;
+  border-bottom: 1rpx solid #eee2d1; padding: 14rpx 0;
+}
+.fact .k { width: 220rpx; flex: none; font-size: 25rpx; color: #a65334; }
+.fact .v { flex: 1; font-size: 25rpx; color: #4b4038; }
+.warn { background: #fffaf1; }

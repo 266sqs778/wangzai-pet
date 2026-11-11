@@ -1,0 +1,58 @@
+<view class="page">
+  <view class="card">
+    <text class="eyebrow">先说结论</text>
+    <text class="h1">公众号和小程序的「资质」是两套账号，但可以复用</text>
+    <text class="muted">公众号本身不是小程序。你是在公众号后台「快速注册并认证」出一个新的小程序账号，它自动和公众号关联；之后再把小程序挂到菜单、图文里。每一个小程序都有独立的 AppID、独立邮箱、独立后台。</text>
+  </view>
+
+  <view class="card">
+    <text class="h2">一、用公众号快速注册小程序</text>
+    <view class="row"><text class="num">1</text><text class="txt">登录公众号后台 → 广告与服务 → 小程序管理 → 添加 → 「快速注册并认证小程序」</text></view>
+    <view class="row"><text class="num">2</text><text class="txt">管理员微信扫码确认，勾选复用「主体资质 / 运营者信息 / 微信认证资质」</text></view>
+    <view class="row"><text class="num">3</text><text class="txt">填一个全新邮箱（没绑定过任何微信公众平台账号），邮件激活，绑定管理员</text></view>
+    <view class="row"><text class="num">4</text><text class="txt">拿到 AppID，填进本项目的 project.config.json，用微信开发者工具导入</text></view>
+    <text class="tip">好处：不用重新交营业执照、不用对公打款、不用再付 300 元认证费（复用公众号认证，到期时间与公众号一致）。前提是你的公众号是「已认证」的企业 / 媒体 / 其他组织类型（含个体工商户）；个人主体公众号没有这个入口。</text>
+  </view>
+
+  <view class="card">
+    <text class="h2">二、能注册几个？跟资质怎么挂钩</text>
+    <view class="fact"><text class="k">同一身份证</text><text class="v">个人主体小程序最多 5 个</text></view>
+    <view class="fact"><text class="k">同一营业执照</text><text class="v">企业 / 政府 / 媒体 / 其他组织最多 50 个</text></view>
+    <view class="fact"><text class="k">个体工商户</text><text class="v">最多 5 个</text></view>
+    <view class="fact"><text class="k">公众号快速注册</text><text class="v">企业类 每月 5 个；个体户 每月 1 个</text></view>
+    <view class="fact"><text class="k">邮箱</text><text class="v">1 个邮箱只能注册 1 个小程序</text></view>
+    <view class="fact"><text class="k">手机 / 微信号</text><text class="v">各可绑定 5 个小程序</text></view>
+    <text class="tip">所以「我有多个小程序」与主体资质直接相关：额度算在主体（身份证 / 营业执照）头上，不算在公众号头上，也不算在管理员个人微信头上。想查名下已绑定多少，关注公众号「公众平台安全助手」→ 绑定查询。</text>
+  </view>
+
+  <view class="card">
+    <text class="h2">三、关联与挂载规则</text>
+    <view class="fact"><text class="k">一个公众号</text><text class="v">可关联 10 个同主体 + 3 个不同主体小程序</text></view>
+    <view class="fact"><text class="k">一个小程序</text><text class="v">最多可被 500 个公众号关联</text></view>
+    <view class="fact"><text class="k">新增关联</text><text class="v">公众号每月 13 次；快速注册创建的不占这个额度</text></view>
+    <text class="muted">快速注册出来的小程序默认已关联公众号，但不会自动出现在公众号资料页，需要手动开启展示。</text>
+    <view class="hr"></view>
+    <text class="h2">挂到公众号的 4 个位置</text>
+    <view class="row"><text class="num">·</text><text class="txt">自定义菜单 → 跳转小程序（需填备用网页，兼容旧版微信）</text></view>
+    <view class="row"><text class="num">·</text><text class="txt">图文消息里插入小程序卡片，可指定落地页路径</text></view>
+    <view class="row"><text class="num">·</text><text class="txt">自动回复 / 客服消息发送小程序卡片</text></view>
+    <view class="row"><text class="num">·</text><text class="txt">公众号资料页「相关小程序」模块</text></view>
+    <text class="tip">注意：小程序必须先「发布」，未发布的小程序在菜单和图文里路径会是空的。</text>
+  </view>
+
+  <view class="card">
+    <text class="h2">四、上线前必须做的两件事</text>
+    <view class="row"><text class="num">1</text><text class="txt">ICP 备案：小程序上架前必须完成备案，在小程序后台「设置 → 基本设置 → 备案」提交。个人 / 个体户主体备案上限 5 个。</text></view>
+    <view class="row"><text class="num">2</text><text class="txt">选服务类目、上传代码、提交审核、发布。审核通过后，菜单和图文才能正常跳转。</text></view>
+    <text class="tip">个人主体小程序不能用 web-view，也不能做支付类目。所以本项目刻意不依赖 web-view：用户复制定制链接到电脑浏览器打开，绕开域名配置和企业主体限制。</text>
+  </view>
+
+  <view class="card">
+    <text class="h2">五、这套服务的数据流</text>
+    <text class="muted">小程序只负责「选形象 + 起名字 + 生成链接」，配置存在手机本地 storage；电脑网页负责「上传照片 + 打包 EXE / BAT」。全程不需要服务器、不需要数据库、不需要用户登录，因此不需要开通云开发，也不产生云费用。</text>
+  </view>
+
+  <view class="card warn">
+    <text class="muted">以上数量与费用规则来自微信公众平台公开说明，平台会调整，最终以你后台页面上的实时提示和官方公告为准。本项目是开源复刻演示，商用前请替换成自有图片素材与品牌名称。</text>
+  </view>
+</view>

@@ -9,3 +9,4 @@ pet-config.json.bak
 .DS_Store
 Thumbs.db
 .wbapp_*.genie
+pet-config.json

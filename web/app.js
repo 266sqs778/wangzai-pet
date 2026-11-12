@@ -375,9 +375,66 @@
       state.lines = DEFAULT_LINES.slice(); state.customCanvas = null; state.customUrl = '';
       $('#photoPreview').hidden = true;
       $('#applyPhoto').disabled = true;
-      $('#packNote').textContent = '包内文件名使用英文，避免解压乱码；中文说明见 README.txt。';
+      $('#packNote').textContent = '「我的分享码」会把当前定制生成专属二维码，朋友扫码直接看到这只宠物。';
       applyState();
       toast('已恢复默认设置');
+    });
+  }
+
+  /* ---------------- share QR + contact modal ---------------- */
+  function qrDataUrl(text, size) {
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    const cells = qr.getModuleCount();
+    const quiet = 4, scale = Math.max(2, Math.floor(size / (cells + quiet * 2)));
+    const total = (cells + quiet * 2) * scale;
+    const cv = document.createElement('canvas');
+    cv.width = total; cv.height = total;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, total, total);
+    ctx.fillStyle = '#29231d';
+    for (let r = 0; r < cells; r++) {
+      for (let c = 0; c < cells; c++) {
+        if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+      }
+    }
+    return cv.toDataURL('image/png');
+  }
+
+  function openQr() {
+    const url = shareUrl();
+    const name = state.name || '望崽';
+    $('#qrTitle').textContent = '扫码看「' + name + '」这只桌宠';
+    $('#qrCodeImg').src = qrDataUrl(url, 480);
+    $('#qrOverlay').hidden = false;
+  }
+  function closeQr() { $('#qrOverlay').hidden = true; }
+
+  function openContact() { $('#contactOverlay').hidden = false; }
+  function closeContact() { $('#contactOverlay').hidden = true; }
+
+  function bindQr() {
+    $('#myQrBtn').addEventListener('click', openQr);
+    $('#myQrBtnFoot').addEventListener('click', openQr);
+    $('#contactBtn').addEventListener('click', openContact);
+    $('#closeQr').addEventListener('click', closeQr);
+    $('#closeContact').addEventListener('click', closeContact);
+    $('#qrOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeQr(); });
+    $('#contactOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeContact(); });
+    $('#copyQrLink').addEventListener('click', () => copyText(shareUrl()).then((ok) => toast(ok ? '定制链接已复制，发给朋友吧' : '复制失败，请手动复制地址栏')));
+    $('#downloadQr').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = $('#qrCodeImg').src;
+      a.download = 'wangzai-share-' + (state.name || 'wangzai') + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast('二维码已保存，发到微信群/朋友圈就能引流');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeQr(); closeContact(); }
     });
   }
 
@@ -387,8 +444,10 @@
   }
 
   function init() {
+    const dbgQr = new URLSearchParams(location.search).get('qr');
     renderGallery();
     bind();
+    bindQr();
     initDrag();
     const restored = restoreFromUrl();
     applyState();
@@ -398,6 +457,8 @@
       openConsole();
       toast('已还原朋友分享的定制');
     }
+    if (dbgQr === '1') setTimeout(openQr, 400);
+    if (dbgQr === 'contact') setTimeout(openContact, 400);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

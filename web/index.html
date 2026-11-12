@@ -218,9 +218,14 @@
         <a class="footer-link" href="#how">三步制作</a>
         <a class="footer-link" href="#stories">主人分享</a>
       </div>
+      <div class="footer-col">
+        <h5>联系与关注</h5>
+        <button class="footer-link" id="contactBtn">联系我们 · 加微信</button>
+        <button class="footer-link" id="myQrBtnFoot">我的分享二维码</button>
+      </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 望崽宠乐园 · 免费宠物桌宠定制</span>
+      <span>© 2026 望崽宠乐园 · 所属【万界店长 · 模因公社】</span>
       <span>照片与设置只留在你的浏览器 · 数据不出电脑</span>
     </div>
   </div>
@@ -304,11 +309,12 @@
       <a class="btn btn-outline btn-block exe-link" href="download/wangzai-pet-exe.zip" download>⬇ 或下载 EXE 完整版（17 MB）</a>
       <p class="pack-note pack-note--tight">轻量包用 BAT 启动、几十 KB，方便发给朋友；EXE 版自带完整动作与右键菜单，直接双击可执行文件。</p>
       <div class="export-row">
+        <button class="btn btn-outline btn-sm" id="myQrBtn">◈ 我的分享码</button>
         <button class="btn btn-outline btn-sm" id="shareBtn">复制定制链接</button>
         <button class="btn btn-outline btn-sm" id="toggleVisible">收起预览</button>
         <button class="btn btn-ghost btn-sm" id="quitPet">重置</button>
       </div>
-      <p class="pack-note" id="packNote">包内文件名使用英文，避免解压乱码；中文说明见 README.txt。</p>
+      <p class="pack-note" id="packNote">「我的分享码」会把当前定制生成专属二维码，朋友扫码直接看到这只宠物。</p>
     </fieldset>
 
     <p class="console-foot">全部计算在浏览器本地完成，关闭页面即清空。导出的包里含 <code>pet-config.json</code>，可以随时用记事本改名字、大小、台词。</p>
@@ -316,6 +322,50 @@
 </aside>
 
 <div class="toast" id="toast" role="status"></div>
+
+<!-- ============ SHARE QR MODAL ============ -->
+<div class="qr-overlay" id="qrOverlay" hidden>
+  <div class="qr-modal" role="dialog" aria-label="我的分享二维码">
+    <button class="icon-btn qr-close" id="closeQr" aria-label="关闭">✕</button>
+    <span class="eyebrow">我的分享码</span>
+    <h3 id="qrTitle">扫码看「望崽」这只桌宠</h3>
+    <div class="qr-code-box" id="qrCodeBox"><img id="qrCodeImg" alt="我的专属分享二维码" /></div>
+    <p class="qr-tip">微信里长按图片保存 · 电脑上右键另存为 · 发到群或朋友圈，朋友扫码直接打开你定制的这只。</p>
+    <div class="export-row export-row--center">
+      <button class="btn btn-primary btn-sm" id="downloadQr">⬇ 保存二维码图片</button>
+      <button class="btn btn-outline btn-sm" id="copyQrLink">复制定制链接</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONTACT MODAL ============ -->
+<div class="qr-overlay" id="contactOverlay" hidden>
+  <div class="qr-modal qr-modal--wide" role="dialog" aria-label="联系与关注">
+    <button class="icon-btn qr-close" id="closeContact" aria-label="关闭">✕</button>
+    <span class="eyebrow">联系与关注</span>
+    <h3>望崽宠乐园 · 所属【万界店长 · 模因公社】</h3>
+    <div class="qr-grid">
+      <figure class="qr-item">
+        <img src="assets/qr/wx-lengshi.jpg" alt="冷石个人微信二维码" />
+        <figcaption><b>加店主微信</b><span>定制交流 · 合作洽谈</span></figcaption>
+      </figure>
+      <figure class="qr-item">
+        <img src="assets/qr/group-12yuan.jpg" alt="望崽宠乐园官方群二维码" />
+        <figcaption><b>望崽宠乐园｜12园</b><span>官方群聊 · 晒宠交流</span></figcaption>
+      </figure>
+      <figure class="qr-item">
+        <img src="assets/qr/gzh-lengshi.jpg" alt="冷石妙悟公众号二维码" />
+        <figcaption><b>公众号 · 冷石妙悟</b><span>模因公社 · 内容更新</span></figcaption>
+      </figure>
+      <figure class="qr-item">
+        <img src="assets/qr/gzh-huangjinchen.jpg" alt="黄金臣公众号二维码" />
+        <figcaption><b>公众号 · 黄金臣</b><span>关注不迷路</span></figcaption>
+      </figure>
+    </div>
+    <p class="qr-tip">群二维码有有效期，扫不进去就先加店主微信，拉你进「12园」。</p>
+  </div>
+</div>
+<script src="assets/qrcode.min.js"></script>
 <script src="pack.js"></script>
 <script src="runtime.js"></script>
 <script src="export.js"></script>

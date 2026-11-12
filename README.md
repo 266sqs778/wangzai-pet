@@ -6,9 +6,29 @@
 
 ## 在线地址
 
-**分享链接**：https://wangzai-pet-07104.app.workbuddy.host/?sharecode=G672SI7TFH
+**分享链接（必须完整带 sharecode）**：https://dengdeng-pet-07104.app.workbuddy.host/?sharecode=G672SI7TFH
+
+> ⚠️ 裸域名 `https://dengdeng-pet-07104.app.workbuddy.host/` 会返回 403。发布平台有分享码门禁，**第一次访问必须带 `?sharecode=G672SI7TFH`**。转发时请整条链接一起复制，或直接发 `promo/` 里的宣传海报（扫码自动带参）。
 
 打开后点右上角「免费定制」，选形象或上传自家照片、起名字、加台词，点「免费生成桌宠包」即可下载一个 ZIP。解压双击 `start.bat`，宠物就上桌了。全程在浏览器本机完成，不上传照片。
+
+## 微信传播物料（扫一扫就能用）
+
+`promo/` 下是可以直接发微信群 / 朋友圈 / 公众号图文的成品：
+
+| 文件 | 用途 |
+|---|---|
+| `望崽宠乐园-微信宣传海报.png` | 1080×1440 竖版主海报，含网站入口码 + 店主微信码 |
+| `望崽宠乐园-朋友圈方图.png` | 1080×1080 方图，九宫格友好 |
+| `望崽宠乐园-扫码直达.png` | 纯二维码，贴群公告 / 名片 / 图文 |
+| `微信分享文案.txt` | 可直接复制的转发话术 + 完整链接 |
+
+所有二维码编码的都是**带 `?sharecode=G672SI7TFH` 的完整链接**，扫码自动带参，
+避开平台门禁；已用 zbar 解码器逐张验证可读。以后换了域名，改
+`make_promo.py` 里的 `SITE_URL` 再运行 `python make_promo.py` 即可重新生成。
+
+> 传播时链接务必整条复制，末尾参数丢了会 403。最保险的是直接发海报图，
+> 或把根目录 `望崽宠乐园-单文件版.html` 当文件转发（零外部请求，双击即用）。
 
 ## 五件交付物
 
@@ -34,6 +54,10 @@ server.py                本地控制台服务（127.0.0.1:8765）
 build_assets.py          透明精灵图生成
 bundle_pet.py            EXE 冻结入口
 start.bat                本地控制台一键启动
+make_promo.py            生成微信海报 / 方图 / 入口二维码 / 转发文案
+promo/                   现成的微信传播物料（可直接发群发圈）
+.github/workflows/       GitHub Pages 自动部署工作流
+build_standalone.py      把多文件源码打包成自包含单文件 index.html
 push_to_github.bat       推送到 GitHub
 ```
 
@@ -72,7 +96,13 @@ python skill/wangzai-pet/scripts/validate_all.py
 
 ### 想推到 GitHub
 
-双击 `push_to_github.bat`，按提示粘贴仓库地址；或手动：
+本地仓库已初始化、6 次提交、暂无 remote。先在 GitHub 网页新建一个**空仓库**
+（不要勾 README / license / .gitignore），然后二选一：
+
+**A. 让 WorkBuddy 代推**：在对话里连接 GitHub 连接器，把仓库地址发我，我来 push。
+
+**B. 本机一键推**：双击 `push_to_github.bat`，粘贴仓库地址；首次会弹 GitHub 登录。
+或手动：
 
 ```bash
 git remote add origin https://github.com/<you>/<repo>.git
@@ -80,7 +110,15 @@ git branch -M main
 git push -u origin main
 ```
 
-本地仓库已初始化并完成首次提交。
+推送后开启 **GitHub Pages**（推荐）：仓库 `Settings → Pages → Build and deployment → Source`
+选 **GitHub Actions**。仓库已带 `.github/workflows/pages.yml`，push 后会自动把
+`web/` 目录部署上线，约 1 分钟得到 `https://<用户名>.github.io/<仓库名>/`。
+
+这个链接**没有分享码门禁**，可以直接甩、直接做二维码，适合当长期自有入口。
+注意国内访问 `github.io` 偶有波动，主力传播仍建议用上面的 workbuddy 链接、
+海报二维码，或直接转发单文件版 HTML。
+
+> 仓库里的 `assets/` 展示素材来自原参考站，仅用于演示；商用前请替换为自有图片。
 
 ## 关键设计
 

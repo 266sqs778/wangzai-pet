@@ -145,7 +145,7 @@
     $('#consoleOverlay').hidden = false;
     document.body.classList.add('console-open');
     if (new URLSearchParams(location.search).has('s')) {
-      history.replaceState(null, '', location.pathname);
+      try { history.replaceState(null, '', location.pathname + '?sharecode=' + currentShareCode()); } catch (e) {}
     }
   }
   function closeConsole() {
@@ -187,8 +187,17 @@
   }
 
   /* ---------------- share link ---------------- */
+  /* The hosting platform requires a sharecode on the FIRST visit, otherwise
+     every subsequent asset request is blocked (403). Always carry it through
+     generated links, and never strip it from the address bar. */
+  const FALLBACK_SHARE_CODE = 'G672SI7TFH';
+  function currentShareCode() {
+    const sc = new URLSearchParams(location.search).get('sharecode');
+    return sc || FALLBACK_SHARE_CODE;
+  }
   function shareUrl() {
     const p = new URLSearchParams();
+    p.set('sharecode', currentShareCode());
     p.set('s', state.species === 'my' ? 'cat' : state.species);
     p.set('n', state.name);
     p.set('z', String(state.size));
@@ -419,6 +428,8 @@
     $('#myQrBtn').addEventListener('click', openQr);
     $('#myQrBtnFoot').addEventListener('click', openQr);
     $('#contactBtn').addEventListener('click', openContact);
+    const headerContact = $('#headerContactBtn');
+    if (headerContact) headerContact.addEventListener('click', openContact);
     $('#closeQr').addEventListener('click', closeQr);
     $('#closeContact').addEventListener('click', closeContact);
     $('#qrOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeQr(); });

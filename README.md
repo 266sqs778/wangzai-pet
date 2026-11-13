@@ -1,14 +1,20 @@
 # 望崽宠乐园 · 一整套可上线的桌宠服务
 
-把「宠物照片 → 会动的桌面小伙伴」做成一条完整链路：**复刻官网 → 网页免费定制 → 一键导出免安装桌宠包（BAT / EXE）→ 发布成在线链接 → 微信小程序引流 → 挂到微信公众号 → 沉淀为 skill 包 / GitHub 仓库**。
+把「宠物照片 → 会动的桌面小伙伴」做成一条完整链路：**品牌官网 → 网页免费定制 → 一键导出免安装桌宠包（BAT / EXE）→ 发布成在线链接 → 微信小程序引流 → 挂到微信公众号 → 沉淀为 skill 包 / GitHub 仓库**。
 
-> 本项目为**【望崽宠乐园】独立品牌站点**，交互形态参考过公开桌面宠物网站，属自主实现，与任何第三方站点无隶属关系。仓库内部分演示图片为参考素材，商用前请替换为自有图片。
+> 本项目为**【望崽宠乐园】独立品牌站点**，由「万界店长 · 模因公社」出品。源码与交互均为自主实现，与任何第三方站点无隶属关系。仓库内 `assets/` 为演示图片，商用前请替换为自有素材。
 
 ## 在线地址
 
-**分享链接（必须完整带 sharecode）**：https://dengdeng-pet-07104.app.workbuddy.host/?sharecode=G672SI7TFH
+**开源仓库**：https://github.com/266sqs778/wangzai-pet
+
+**GitHub Pages（无门禁，可直接甩）**：https://266sqs778.github.io/wangzai-pet/
+
+**微信传播链接（必须完整带 sharecode）**：https://dengdeng-pet-07104.app.workbuddy.host/?sharecode=G672SI7TFH
 
 > ⚠️ 裸域名 `https://dengdeng-pet-07104.app.workbuddy.host/` 会返回 403。发布平台有分享码门禁，**第一次访问必须带 `?sharecode=G672SI7TFH`**。转发时请整条链接一起复制，或直接发 `promo/` 里的宣传海报（扫码自动带参）。
+>
+> 关于域名：`dengdeng-pet-07104` 是发布平台在首次部署时自动分配的域名标识，与【望崽宠乐园】品牌无关。已发出的海报二维码指向该链接，故暂不更换；绑定自有域名或改用上面的 GitHub Pages 即可完全去除。
 
 打开后点右上角「免费定制」，选形象或上传自家照片、起名字、加台词，点「免费生成桌宠包」即可下载一个 ZIP。解压双击 `start.bat`，宠物就上桌了。全程在浏览器本机完成，不上传照片。
 
@@ -34,7 +40,7 @@
 
 | # | 交付物 | 位置 | 说明 |
 |---|---|---|---|
-| 1 | 上线网站 | `web/` | 复刻官网 + 免费定制台 + 浏览器内 ZIP 打包 |
+| 1 | 上线网站 | `web/` | 品牌官网 + 免费定制台 + 浏览器内 ZIP 打包 |
 | 2 | 免安装桌宠包 | 网页实时生成 | BAT 轻量包（几十 KB）；或下载 EXE 完整版（17 MB） |
 | 3 | 微信小程序 | `miniprogram/` | 手机定制、生成链接、公众号挂载指南，无后端 |
 | 4 | Skill 包 | `skill/wangzai-pet/`、`dist/wangzai-pet.zip` | 符合 Agent Skill 规范，官方校验器 9/9 通过 |
@@ -94,31 +100,16 @@ python skill/wangzai-pet/scripts/validate_all.py
 
 用微信开发者工具导入 `miniprogram/`，把 `project.config.json` 的 `appid` 换成自己的，`config.js` 换成自己的线上域名与分享码。详见 `miniprogram/README.md` 与 `docs/微信公众号与小程序指南.md`。
 
-### 想推到 GitHub
+### 仓库与 GitHub Pages
 
-本地仓库已初始化、6 次提交、暂无 remote。先在 GitHub 网页新建一个**空仓库**
-（不要勾 README / license / .gitignore），然后二选一：
+仓库已发布在 **https://github.com/266sqs778/wangzai-pet**（公开、默认分支 `main`）。
+`.github/workflows/pages.yml` 会在每次 push 后自动把 `web/` 部署到 GitHub Pages：
 
-**A. 让 WorkBuddy 代推**：在对话里连接 GitHub 连接器，把仓库地址发我，我来 push。
-
-**B. 本机一键推**：双击 `push_to_github.bat`，粘贴仓库地址；首次会弹 GitHub 登录。
-或手动：
-
-```bash
-git remote add origin https://github.com/<you>/<repo>.git
-git branch -M main
-git push -u origin main
-```
-
-推送后开启 **GitHub Pages**（推荐）：仓库 `Settings → Pages → Build and deployment → Source`
-选 **GitHub Actions**。仓库已带 `.github/workflows/pages.yml`，push 后会自动把
-`web/` 目录部署上线，约 1 分钟得到 `https://<用户名>.github.io/<仓库名>/`。
+https://266sqs778.github.io/wangzai-pet/
 
 这个链接**没有分享码门禁**，可以直接甩、直接做二维码，适合当长期自有入口。
-注意国内访问 `github.io` 偶有波动，主力传播仍建议用上面的 workbuddy 链接、
-海报二维码，或直接转发单文件版 HTML。
-
-> 仓库里的 `assets/` 展示素材来自原参考站，仅用于演示；商用前请替换为自有图片。
+注意国内访问 `github.io` 偶有波动，主力传播仍建议用上面的分享链接、海报二维码，
+或直接转发单文件版 HTML。本地同步只需 `git push`（`master` 已跟踪 `origin/main`）。
 
 ## 关键设计
 
@@ -144,7 +135,7 @@ git push -u origin main
 
 ## 许可
 
-代码部分按 MIT 使用；`assets/` 下的展示素材来自原站，仅用于演示，商用需替换为自有素材。
+代码部分按 MIT 使用；`assets/` 下的演示图片商用前请替换为自有素材。
 
 ## 重要：线上站点为什么曾打不开 / 功能全失效
 

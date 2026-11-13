@@ -1,6 +1,6 @@
 ---
 name: wangzai-pet
-description: 复刻桌宠官网、搭建免费在线定制台、导出免安装的 Windows 桌宠包（BAT 与 EXE）、部署成可传播链接、生成微信小程序并挂到微信公众号。当用户提出「桌面宠物 / 桌宠 / 把宠物带到电脑桌面 / 宠物照片变桌宠 / 桌宠 EXE 或 BAT 分发 / 桌宠定制网站上线 / 桌宠小程序 / 公众号挂小程序 / 桌宠服务 skill 包」等需求时使用。
+description: 搭建桌宠品牌官网、搭建免费在线定制台、导出免安装的 Windows 桌宠包（BAT 与 EXE）、部署成可传播链接、生成微信小程序并挂到微信公众号。当用户提出「桌面宠物 / 桌宠 / 把宠物带到电脑桌面 / 宠物照片变桌宠 / 桌宠 EXE 或 BAT 分发 / 桌宠定制网站上线 / 桌宠小程序 / 公众号挂小程序 / 桌宠服务 skill 包」等需求时使用。
 agent_created: true
 ---
 
@@ -10,7 +10,7 @@ agent_created: true
 
 ## 何时使用
 
-- 复刻或搭建桌宠类官网，并提供访客可自助使用的定制台。
+- 搭建桌宠类品牌官网，并提供访客可自助使用的定制台。
 - 把定制结果导出为**对方电脑上能直接双击运行**的 BAT / EXE 桌宠包。
 - 把网站发布成一条可分享的在线链接，或做成微信小程序挂到公众号。
 - 把这套能力沉淀为可复用、可上传到 GitHub 的 skill 包。
@@ -27,7 +27,7 @@ agent_created: true
 | `scripts/build_assets.py` | 从原图生成透明精灵图 |
 | `scripts/desktop_pet.py` / `server.py` / `bundle_pet.py` | 功能完整的 Python 桌宠与本地控制台 |
 | `scripts/validate_all.py` | 一键校验：语法、页面完整性、模板一致性、包可生成 |
-| `references/官网复刻与定制台.md` | 页面结构、交互与纯前端架构 |
+| `references/品牌官网与定制台.md` | 页面结构、交互与纯前端架构 |
 | `references/桌宠包格式.md` | ZIP 布局、洋红透明键、配置字段 |
 | `references/URL定制参数.md` | 网页与小程序共用的分享链接协议 |
 | `references/部署上线.md` | 静态部署、分享码、小程序发布路径 |
@@ -42,7 +42,7 @@ agent_created: true
 3. 定制台全部在浏览器内完成：选形象、上传照片、命名、调大小速度、加台词、预览动作。
 4. 点击「免费生成桌宠包」，由 `pack.js` + `export.js` 在浏览器里组装 ZIP 并下载，不经过任何服务器。
 
-详细结构见 `references/官网复刻与定制台.md`。
+详细结构见 `references/品牌官网与定制台.md`。
 
 ### 2. 生成并验证桌宠包
 
@@ -86,7 +86,7 @@ python scripts/validate_all.py
 - 网页 `runtime.js` 与 `scripts/win_pet.ps1` 是同一份运行时的两份副本；`validate_all.py` 会校验一致，改动时同步两边。
 - 配置唯一来源是 `pet-config.json`；网页、BAT 包、EXE 包都读它。
 - 全程无后端、无数据库、无用户登录；照片只在浏览器本地处理。
-- 站点展示素材为原站演示素材，**商用前必须替换为自有图片与品牌名称**。
+- 站点展示素材为演示图片，**商用前必须替换为自有素材**。
 
 ## 校验
 

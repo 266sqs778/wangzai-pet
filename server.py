@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Local control server for the Dengdeng desktop pet.
+Local control server for the Wangzai Pet Paradise desktop pet.
 
 It serves the cloned homepage, keeps pet-config.json as the single source of
 truth, and launches / talks to the transparent desktop-pet window.
@@ -268,7 +268,7 @@ def main() -> None:
         if not no_browser:
             webbrowser.open(f"http://127.0.0.1:{PORT}/")
         return
-    print(f"Dengdeng pet console -> http://127.0.0.1:{PORT}")
+    print(f"Wangzai Pet console -> http://127.0.0.1:{PORT}")
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
     if not no_pet:

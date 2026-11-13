@@ -1,4 +1,4 @@
-/* ============ Dengdeng pet - homepage + remote console ============ */
+/* ============ Wangzai Pet Paradise - homepage + remote console ============ */
 (() => {
   'use strict';
 

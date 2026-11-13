@@ -22,10 +22,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The hosted site uses a fully self-contained index.html (~8 MB), which is
+      # slow to load over github.io. For Pages, serve the multi-file source
+      # version instead: a ~20 KB HTML shell plus assets loaded in parallel,
+      # and the EXE download resolves to a local relative path (no sharecode).
+      - name: Build lightweight Pages entry
+        run: |
+          mkdir -p _site
+          cp -r web/. _site/
+          cp web/index-src.html _site/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          # web/index.html is a fully self-contained single file, so no build step is needed.
-          path: web
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

@@ -142,6 +142,119 @@
     return tmp;
   }
 
+  /* ---------- make a uploaded photo look like a standalone pet ----------
+     A plain circular crop keeps the photo's original background, which reads
+     as a "photo sticker" rather than a pet sitting on your desktop. Try a
+     conservative border-seed flood fill first: it only fires when the image
+     edge is a fairly uniform colour (studio / wall shots). Anything noisier
+     falls back to the feathered circle, so we never chew up a good photo. */
+  function removeBorderBackground(canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const img = ctx.getImageData(0, 0, w, h);
+    const d = img.data;
+    const band = Math.max(3, Math.round(Math.min(w, h) * 0.05));
+    const step = 3;
+    const rs = [], gs = [], bs = [];
+    const sample = (x, y) => { const i = (y * w + x) * 4; rs.push(d[i]); gs.push(d[i + 1]); bs.push(d[i + 2]); };
+    for (let y = 0; y < band; y++) for (let x = 0; x < w; x += step) {
+      sample(x, y); sample(x, h - 1 - y);
+    }
+    for (let x = 0; x < band; x++) for (let y = 0; y < h; y += step) {
+      sample(x, y); sample(w - 1 - x, y);
+    }
+    const med = (a) => { a.sort((p, q) => p - q); return a[Math.floor(a.length / 2)]; };
+    const br = med(rs), bg = med(gs), bb = med(bs);
+    let dev = 0;
+    for (let i = 0; i < rs.length; i++) {
+      dev += Math.abs(rs[i] - br) + Math.abs(gs[i] - bg) + Math.abs(bs[i] - bb);
+    }
+    dev /= rs.length * 3;
+    if (dev > 34) return false; // busy background: don't guess
+
+    const tol = Math.max(40, Math.round(dev * 2.4));
+    const dist = (i) => Math.max(Math.abs(d[i] - br), Math.abs(d[i + 1] - bg), Math.abs(d[i + 2] - bb));
+    const seen = new Uint8Array(w * h);
+    const gone = new Uint8Array(w * h);
+    const queue = new Int32Array(w * h);
+    let head = 0, tail = 0;
+    const push = (x, y) => {
+      const p = y * w + x;
+      if (seen[p]) return;
+      seen[p] = 1;
+      if (dist(p * 4) <= tol) { queue[tail++] = p; }
+    };
+    for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
+    for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
+    let removed = 0;
+    while (head < tail) {
+      const p = queue[head++];
+      const x = p % w, y = (p / w) | 0;
+      d[p * 4 + 3] = 0; gone[p] = 1; removed++;
+      if (x > 0) push(x - 1, y);
+      if (x < w - 1) push(x + 1, y);
+      if (y > 0) push(x, y - 1);
+      if (y < h - 1) push(x, y + 1);
+    }
+    const frac = removed / (w * h);
+    if (frac < 0.03 || frac > 0.82) return false; // nothing removed / ate the pet
+    // soften the cut boundary so it doesn't look scissor-cut
+    for (let p = 0; p < w * h; p++) {
+      if (gone[p] || d[p * 4 + 3] === 0) continue;
+      const x = p % w, y = (p / w) | 0;
+      let nextToCut = false;
+      if (x > 0 && gone[p - 1]) nextToCut = true;
+      else if (x < w - 1 && gone[p + 1]) nextToCut = true;
+      else if (y > 0 && gone[p - w]) nextToCut = true;
+      else if (y < h - 1 && gone[p + w]) nextToCut = true;
+      if (!nextToCut) continue;
+      const dv = dist(p * 4);
+      if (dv < tol * 1.35) {
+        d[p * 4 + 3] = Math.round(255 * Math.min(1, (dv - tol) / (tol * 0.35)));
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    return true;
+  }
+
+  function trimToContent(canvas, pad) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const d = ctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (d[(y * w + x) * 4 + 3] > 24) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    }
+    if (x1 <= x0 || y1 <= y0) return canvas;
+    const p = pad == null ? 0.06 : pad;
+    const out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    const c = out.getContext('2d');
+    const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+    const scale = Math.min(w * (1 - 2 * p) / cw, h * (1 - 2 * p) / ch);
+    const nw = cw * scale, nh = ch * scale;
+    c.drawImage(canvas, x0, y0, cw, ch, (w - nw) / 2, (h - nh) / 2, nw, nh);
+    return out;
+  }
+
+  /* Returns { canvas, backgroundRemoved }. The canvas is always transparent. */
+  function preparePet(image, side, removeBg) {
+    const s = side || 360;
+    const tmp = document.createElement('canvas');
+    tmp.width = s; tmp.height = s;
+    const t = tmp.getContext('2d');
+    const crop = Math.min(image.width, image.height);
+    t.drawImage(image, (image.width - crop) / 2, (image.height - crop) / 2,
+                crop, crop, 0, 0, s, s);
+    if (removeBg !== false && removeBorderBackground(tmp)) {
+      return { canvas: trimToContent(tmp, 0.08), backgroundRemoved: true };
+    }
+    return { canvas: sticker(image, s), backgroundRemoved: false };
+  }
+
   function canvasPngBytes(canvas) {
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -190,5 +303,5 @@
     });
   }
 
-  global.PET_PACK = { buildZip, magentaKey, sticker, canvasPngBytes, derivePoses, loadImage };
+  global.PET_PACK = { buildZip, magentaKey, sticker, preparePet, canvasPngBytes, derivePoses, loadImage };
 })(window);

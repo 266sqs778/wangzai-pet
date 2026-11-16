@@ -302,12 +302,14 @@
 
     <fieldset class="control-group">
       <legend data-step="04">换成你家那只</legend>
-      <p class="group-hint">选一张正面、光线好的照片，会自动裁成柔和的圆形宠物贴纸。照片只在本机浏览器里处理。</p>
+      <p class="group-hint">选一张正面、光线好的照片。<b>上传后立刻就是你的桌宠</b>，不用再点别的按钮。照片只在本机浏览器里处理，不上传。</p>
       <div class="upload-row">
         <label class="upload-btn">选择照片<input id="photoInput" type="file" accept="image/*" hidden /></label>
-        <button class="btn btn-outline btn-sm" id="applyPhoto" disabled>应用到预览</button>
+        <label class="bg-toggle"><input id="removeBg" type="checkbox" checked /> 自动去掉背景</label>
       </div>
-      <div class="photo-preview" id="photoPreview" hidden><img id="photoPreviewImg" alt="待上传的照片" /></div>
+      <div class="photo-preview" id="photoPreview" hidden><img id="photoPreviewImg" alt="你的宠物预览" /></div>
+      <p class="photo-note" id="photoNote" hidden></p>
+      <button class="btn btn-outline btn-sm" id="applyPhoto" hidden disabled>应用到预览</button>
     </fieldset>
 
     <fieldset class="control-group export-group">

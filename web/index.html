@@ -447,8 +447,14 @@ input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
 }
 .upload-btn:hover{background:var(--accent-wash)}
 .upload-btn:active{transform:scale(.98)}
-.photo-preview{height:112px;border-radius:var(--r-sm);background:linear-gradient(155deg,#fff6ee,#f6ddcc);display:grid;place-items:center;overflow:hidden;margin-bottom:10px;border:1px solid rgba(255,255,255,.8)}
-.photo-preview img{max-height:106px;max-width:100%;object-fit:contain}
+.bg-toggle{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px;color:var(--ink-soft);cursor:pointer;font-weight:500}
+.bg-toggle input{width:15px;height:15px}
+.photo-preview{height:132px;border-radius:var(--r-sm);background:
+  radial-gradient(circle at 30% 20%,rgba(255,255,255,.9),transparent 60%),
+  linear-gradient(155deg,#fff2e6,#f3d9c4);display:grid;place-items:center;overflow:hidden;margin-bottom:8px;border:1px solid rgba(255,255,255,.9)}
+.photo-preview img{max-height:124px;max-width:100%;object-fit:contain}
+.photo-note{margin:0 0 10px;font-size:11.5px;line-height:1.6;color:var(--accent-deep);background:var(--accent-wash);border-left:2px solid var(--accent);padding:7px 10px;border-radius:0 var(--r-xs) var(--r-xs) 0}
+#applyPhoto[hidden]{display:none}
 .power-row{display:flex;gap:8px;flex-wrap:wrap}
 .console-foot{font-size:11px;color:var(--faint);line-height:1.8;margin:6px 0 0}
 .sfx-toggle{margin-left:auto;border:1px solid rgba(160,110,80,.18);background:rgba(255,255,255,.7);color:var(--accent-deep);border-radius:var(--r-pill);padding:4px 10px;font-size:11px;white-space:nowrap;transition:background var(--dur-state) var(--ease-out),transform var(--dur-press) var(--ease-spring)}
@@ -878,12 +884,14 @@ input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
 
     <fieldset class="control-group">
       <legend data-step="04">换成你家那只</legend>
-      <p class="group-hint">选一张正面、光线好的照片，会自动裁成柔和的圆形宠物贴纸。照片只在本机浏览器里处理。</p>
+      <p class="group-hint">选一张正面、光线好的照片。<b>上传后立刻就是你的桌宠</b>，不用再点别的按钮。照片只在本机浏览器里处理，不上传。</p>
       <div class="upload-row">
         <label class="upload-btn">选择照片<input id="photoInput" type="file" accept="image/*" hidden /></label>
-        <button class="btn btn-outline btn-sm" id="applyPhoto" disabled>应用到预览</button>
+        <label class="bg-toggle"><input id="removeBg" type="checkbox" checked /> 自动去掉背景</label>
       </div>
-      <div class="photo-preview" id="photoPreview" hidden><img id="photoPreviewImg" alt="待上传的照片" /></div>
+      <div class="photo-preview" id="photoPreview" hidden><img id="photoPreviewImg" alt="你的宠物预览" /></div>
+      <p class="photo-note" id="photoNote" hidden></p>
+      <button class="btn btn-outline btn-sm" id="applyPhoto" hidden disabled>应用到预览</button>
     </fieldset>
 
     <fieldset class="control-group export-group">
@@ -1108,6 +1116,119 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return tmp;
   }
 
+  /* ---------- make a uploaded photo look like a standalone pet ----------
+     A plain circular crop keeps the photo's original background, which reads
+     as a "photo sticker" rather than a pet sitting on your desktop. Try a
+     conservative border-seed flood fill first: it only fires when the image
+     edge is a fairly uniform colour (studio / wall shots). Anything noisier
+     falls back to the feathered circle, so we never chew up a good photo. */
+  function removeBorderBackground(canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const img = ctx.getImageData(0, 0, w, h);
+    const d = img.data;
+    const band = Math.max(3, Math.round(Math.min(w, h) * 0.05));
+    const step = 3;
+    const rs = [], gs = [], bs = [];
+    const sample = (x, y) => { const i = (y * w + x) * 4; rs.push(d[i]); gs.push(d[i + 1]); bs.push(d[i + 2]); };
+    for (let y = 0; y < band; y++) for (let x = 0; x < w; x += step) {
+      sample(x, y); sample(x, h - 1 - y);
+    }
+    for (let x = 0; x < band; x++) for (let y = 0; y < h; y += step) {
+      sample(x, y); sample(w - 1 - x, y);
+    }
+    const med = (a) => { a.sort((p, q) => p - q); return a[Math.floor(a.length / 2)]; };
+    const br = med(rs), bg = med(gs), bb = med(bs);
+    let dev = 0;
+    for (let i = 0; i < rs.length; i++) {
+      dev += Math.abs(rs[i] - br) + Math.abs(gs[i] - bg) + Math.abs(bs[i] - bb);
+    }
+    dev /= rs.length * 3;
+    if (dev > 34) return false; // busy background: don't guess
+
+    const tol = Math.max(40, Math.round(dev * 2.4));
+    const dist = (i) => Math.max(Math.abs(d[i] - br), Math.abs(d[i + 1] - bg), Math.abs(d[i + 2] - bb));
+    const seen = new Uint8Array(w * h);
+    const gone = new Uint8Array(w * h);
+    const queue = new Int32Array(w * h);
+    let head = 0, tail = 0;
+    const push = (x, y) => {
+      const p = y * w + x;
+      if (seen[p]) return;
+      seen[p] = 1;
+      if (dist(p * 4) <= tol) { queue[tail++] = p; }
+    };
+    for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
+    for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
+    let removed = 0;
+    while (head < tail) {
+      const p = queue[head++];
+      const x = p % w, y = (p / w) | 0;
+      d[p * 4 + 3] = 0; gone[p] = 1; removed++;
+      if (x > 0) push(x - 1, y);
+      if (x < w - 1) push(x + 1, y);
+      if (y > 0) push(x, y - 1);
+      if (y < h - 1) push(x, y + 1);
+    }
+    const frac = removed / (w * h);
+    if (frac < 0.03 || frac > 0.82) return false; // nothing removed / ate the pet
+    // soften the cut boundary so it doesn't look scissor-cut
+    for (let p = 0; p < w * h; p++) {
+      if (gone[p] || d[p * 4 + 3] === 0) continue;
+      const x = p % w, y = (p / w) | 0;
+      let nextToCut = false;
+      if (x > 0 && gone[p - 1]) nextToCut = true;
+      else if (x < w - 1 && gone[p + 1]) nextToCut = true;
+      else if (y > 0 && gone[p - w]) nextToCut = true;
+      else if (y < h - 1 && gone[p + w]) nextToCut = true;
+      if (!nextToCut) continue;
+      const dv = dist(p * 4);
+      if (dv < tol * 1.35) {
+        d[p * 4 + 3] = Math.round(255 * Math.min(1, (dv - tol) / (tol * 0.35)));
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    return true;
+  }
+
+  function trimToContent(canvas, pad) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const d = ctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (d[(y * w + x) * 4 + 3] > 24) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    }
+    if (x1 <= x0 || y1 <= y0) return canvas;
+    const p = pad == null ? 0.06 : pad;
+    const out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    const c = out.getContext('2d');
+    const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+    const scale = Math.min(w * (1 - 2 * p) / cw, h * (1 - 2 * p) / ch);
+    const nw = cw * scale, nh = ch * scale;
+    c.drawImage(canvas, x0, y0, cw, ch, (w - nw) / 2, (h - nh) / 2, nw, nh);
+    return out;
+  }
+
+  /* Returns { canvas, backgroundRemoved }. The canvas is always transparent. */
+  function preparePet(image, side, removeBg) {
+    const s = side || 360;
+    const tmp = document.createElement('canvas');
+    tmp.width = s; tmp.height = s;
+    const t = tmp.getContext('2d');
+    const crop = Math.min(image.width, image.height);
+    t.drawImage(image, (image.width - crop) / 2, (image.height - crop) / 2,
+                crop, crop, 0, 0, s, s);
+    if (removeBg !== false && removeBorderBackground(tmp)) {
+      return { canvas: trimToContent(tmp, 0.08), backgroundRemoved: true };
+    }
+    return { canvas: sticker(image, s), backgroundRemoved: false };
+  }
+
   function canvasPngBytes(canvas) {
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -1156,7 +1277,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     });
   }
 
-  global.PET_PACK = { buildZip, magentaKey, sticker, canvasPngBytes, derivePoses, loadImage };
+  global.PET_PACK = { buildZip, magentaKey, sticker, preparePet, canvasPngBytes, derivePoses, loadImage };
 })(window);
 
 </script>
@@ -1582,6 +1703,7 @@ if errorlevel 1 (
     name: '望崽', species: 'cat', size: 220, speed: 2,
     auto: true, topmost: true, lines: DEFAULT_LINES.slice(),
     action: 'idle', customCanvas: null, customUrl: '',
+    photoImage: null, backgroundRemoved: false,
     syncGuard: false, drag: null, walkTimer: null,
   };
 
@@ -1921,16 +2043,21 @@ if errorlevel 1 (
     btn.textContent = withExe ? '正在制作专属 EXE…' : '正在打包素材…';
     setExportProgress(0.04, withExe ? '正在准备专属桌宠…' : '正在准备素材…');
     try {
+      // Safety net: once a visitor has uploaded a photo, their export is
+      // ALWAYS that photo. Switching the dropdown to a built-in later is a
+      // preview-only whim; the promise "your photo becomes your EXE" wins.
+      const usingPhoto = !!state.customCanvas;
+      const exportSpecies = usingPhoto ? 'my' : state.species;
       const cfg = {
-        name: state.name, species: state.species === 'my' ? 'my' : state.species,
+        name: state.name, species: exportSpecies,
         size: state.size, speed: state.speed, auto: state.auto,
         topmost: state.topmost, lines: state.lines,
         note: 'Generated by Wangzai Pet Paradise customiser',
       };
       const result = await PET_EXPORT.buildPackage({
         cfg,
-        spriteNames: state.species === 'my' ? [] : (SPRITES[state.species] || SPRITES.cat),
-        customCanvas: state.species === 'my' ? state.customCanvas : null,
+        spriteNames: usingPhoto ? [] : (SPRITES[state.species] || SPRITES.cat),
+        customCanvas: usingPhoto ? state.customCanvas : null,
         withExe,
         onProgress: setExportProgress,
       });
@@ -1964,19 +2091,45 @@ if errorlevel 1 (
   }
 
   /* ---------------- photo upload ---------------- */
+  function applyCustomPhoto() {
+    if (!state.customCanvas) return;
+    // Uploading a photo means "this is my pet" — apply it everywhere, now.
+    // No extra hidden button should stand between a photo and the EXE.
+    state.species = 'my';
+    const sel = $('#petSpecies');
+    if (sel) sel.value = 'my';
+    state.action = 'idle';
+    renderPreview();
+    $('#applyPhoto').disabled = true;
+    $('#applyPhoto').textContent = '已应用';
+    const note = $('#photoNote');
+    if (note) {
+      note.textContent = state.backgroundRemoved
+        ? '已去掉背景并裁好，预览和导出的 EXE 都是这一只。'
+        : '已裁成圆形贴纸，预览和导出的 EXE 都是这一只。';
+      note.hidden = false;
+    }
+    toast('已换成你家那只 · 现在就能生成专属 EXE');
+  }
+
+  function processPhoto(im) {
+    state.photoImage = im;
+    const removeBg = $('#removeBg') ? $('#removeBg').checked : true;
+    const out = PET_PACK.preparePet(im, 360, removeBg);
+    state.customCanvas = out.canvas;
+    state.backgroundRemoved = out.backgroundRemoved;
+    state.customUrl = state.customCanvas.toDataURL('image/png');
+    $('#photoPreviewImg').src = state.customUrl;
+    $('#photoPreview').hidden = false;
+    applyCustomPhoto();
+  }
+
   function handlePhoto(file) {
     if (!file || !file.type.startsWith('image/')) return toast('请选择一张图片');
     const reader = new FileReader();
     reader.onload = () => {
       const im = new Image();
-      im.onload = () => {
-        state.customCanvas = PET_PACK.sticker(im, 360);
-        state.customUrl = state.customCanvas.toDataURL('image/png');
-        $('#photoPreviewImg').src = state.customUrl;
-        $('#photoPreview').hidden = false;
-        $('#applyPhoto').disabled = false;
-        toast('照片已在本机处理好，点「应用到预览」看看');
-      };
+      im.onload = () => processPhoto(im);
       im.onerror = () => toast('这张图读不出来，换一张试试');
       im.src = reader.result;
     };
@@ -2058,14 +2211,11 @@ if errorlevel 1 (
     $('#sayText').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#sayBtn').click(); });
 
     $('#photoInput').addEventListener('change', (e) => handlePhoto(e.target.files[0]));
-    $('#applyPhoto').addEventListener('click', () => {
-      if (!state.customUrl) return;
-      state.species = 'my';
-      $('#petSpecies').value = 'my';
-      state.action = 'idle';
-      renderPreview();
-      toast('换成你家那只啦');
+    const bgToggle = $('#removeBg');
+    if (bgToggle) bgToggle.addEventListener('change', () => {
+      if (state.photoImage) processPhoto(state.photoImage);
     });
+    $('#applyPhoto').addEventListener('click', applyCustomPhoto);
 
     $('#exportBtn').addEventListener('click', () => exportPack('lite'));
     const exeBtn = $('#exportExeBtn');
@@ -2088,8 +2238,11 @@ if errorlevel 1 (
       state.name = '望崽'; state.species = 'cat'; state.size = 220; state.speed = 2;
       state.auto = true; state.topmost = true; state.action = 'idle';
       state.lines = DEFAULT_LINES.slice(); state.customCanvas = null; state.customUrl = '';
+      state.photoImage = null; state.backgroundRemoved = false;
       $('#photoPreview').hidden = true;
+      const pnote = $('#photoNote'); if (pnote) pnote.hidden = true;
       $('#applyPhoto').disabled = true;
+      $('#applyPhoto').textContent = '应用到预览';
       $('#packNote').textContent = '「我的分享码」会把当前定制生成专属二维码，朋友扫码直接看到这只宠物。';
       applyState();
       toast('已恢复默认设置');

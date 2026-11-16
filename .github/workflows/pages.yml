@@ -22,10 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # The hosted site uses a fully self-contained index.html (~8 MB), which is
-      # slow to load over github.io. For Pages, serve the multi-file source
-      # version instead: a ~20 KB HTML shell plus assets loaded in parallel,
-      # and the EXE download resolves to a local relative path (no sharecode).
+      # The hosted/standalone index.html is ~30 MB because it embeds the 17 MB
+      # generic EXE engine for offline use. github.io is slow with that, so
+      # Pages serves the multi-file source: a small HTML shell, parallel assets,
+      # and the same engine at download/wangzai-pet.exe fetched only on export.
       - name: Build lightweight Pages entry
         run: |
           mkdir -p _site

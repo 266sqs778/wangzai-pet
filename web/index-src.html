@@ -44,10 +44,10 @@
     <div class="hero-copy">
       <span class="eyebrow">桌面陪伴 · 一对一定制 · 完全免费</span>
       <h1>把你家宠物，<br />带到电脑桌面 <span class="clay">陪伴你</span>。</h1>
-      <p class="lede">选一只、或上传你家那张最满意的照片，给它起个名字，一键导出专属桌宠包。解压、双击，它就在你的桌面上了。</p>
+      <p class="lede">选一只、或上传你家那张最满意的照片，给它起个名字，一键生成你的专属 EXE 桌宠。解压、双击，它就在你的桌面上了。</p>
 
       <div class="hero-cta">
-        <button class="btn btn-primary" data-open-console>免费定制并下载</button>
+        <button class="btn btn-primary" data-open-console>免费定制 · 生成专属 EXE</button>
         <a class="btn btn-ghost" href="#how">先看本领 <span aria-hidden="true">→</span></a>
       </div>
 
@@ -86,7 +86,7 @@
           <div class="desktop-taskbar" aria-hidden="true"><span class="tb-start">⊞</span><span class="tb-time" id="tbTime">22:11</span></div>
         </div>
       </div>
-      <p class="hero-visual__hint">↑ 网页里先玩个够。满意了点「免费定制并下载」，导出的包解压双击，它就真的上桌了。</p>
+      <p class="hero-visual__hint">↑ 网页里先玩个够。满意了点「免费定制」，生成的 EXE 解压双击，它就真的上桌了。</p>
     </div>
   </section>
 
@@ -181,13 +181,13 @@
 
         <article class="how-card how-card--accent reveal">
           <div class="how-num">03</div>
-          <h3>下载桌宠包，双击上桌</h3>
+          <h3>生成专属 EXE，双击上桌</h3>
           <p class="text-soft"><b>它来陪你啦</b> · Windows 10 / 11</p>
           <div class="finish-frame">
             <img src="assets/home-process-cat.webp" alt="靠着休息的橘猫桌宠" />
           </div>
-          <button class="btn btn-primary btn-block" id="importDesktop">免费生成桌宠包 <span aria-hidden="true">↗</span></button>
-          <p class="how-foot how-foot--center">BAT + 素材，解压即用 · 可自由分享</p>
+          <button class="btn btn-primary btn-block" id="importDesktop">生成我的 EXE 桌宠 <span aria-hidden="true">↗</span></button>
+          <p class="how-foot how-foot--center">专属 EXE + 照片素材，解压即用 · 可自由分享</p>
         </article>
       </div>
     </div>
@@ -216,7 +216,7 @@
       <div class="footer-col">
         <h5>定制台</h5>
         <button class="footer-link" data-open-console>免费定制</button>
-        <button class="footer-link" id="footerLaunch">生成桌宠包</button>
+        <button class="footer-link" id="footerLaunch">生成专属 EXE</button>
         <button class="footer-link" id="footerShare">复制分享链接</button>
       </div>
       <div class="footer-col">
@@ -312,10 +312,14 @@
 
     <fieldset class="control-group export-group">
       <legend data-step="05">带上它回家</legend>
-      <p class="group-hint">生成一个 <b>免安装的 Windows 桌宠包</b>：BAT + 素材 + 配置，解压后双击 <code>start.bat</code> 即可上桌。不联网、不装 Python、可自由分享。</p>
-      <button class="btn btn-primary btn-block" id="exportBtn">⬇ 免费生成桌宠包（.zip）</button>
-      <a class="btn btn-outline btn-block exe-link" href="download/wangzai-pet-exe.zip" download>⬇ 或下载 EXE 完整版（17 MB）</a>
-      <p class="pack-note pack-note--tight">轻量包用 BAT 启动、几十 KB，方便发给朋友；EXE 版自带完整动作与右键菜单，直接双击可执行文件。</p>
+      <p class="group-hint">把上面这只打包成 <b>你的专属 EXE 桌宠</b>：桌宠引擎 + 由照片生成的动作帧 + 配置一起装进 ZIP。解压后双击 <code>wangzai-pet.exe</code> 就上桌，不用装 Python、不用联网。</p>
+      <button class="btn btn-primary btn-block" id="exportExeBtn">⬇ 生成我的专属 EXE 桌宠包</button>
+      <div class="export-progress" id="exportProgress" hidden>
+        <div class="export-progress__label" id="exportProgressText">正在准备…</div>
+        <div class="export-progress__track"><span id="exportProgressBar"></span></div>
+      </div>
+      <button class="btn btn-outline btn-block" id="exportBtn">⬇ 只要轻量 BAT 包（几十 KB）</button>
+      <p class="pack-note pack-note--tight">EXE 包约 17 MB，首次生成需解包桌宠引擎；发给朋友解压双击即可。轻量包用 BAT 启动，适合快速分享。</p>
       <div class="export-row">
         <button class="btn btn-outline btn-sm" id="myQrBtn">◈ 我的分享码</button>
         <button class="btn btn-outline btn-sm" id="shareBtn">复制定制链接</button>

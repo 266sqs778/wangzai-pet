@@ -147,11 +147,16 @@ def main() -> None:
         "return location.origin + location.pathname + '?' + p.toString();",
         "var base = (location.protocol === 'file:' || location.origin === 'null') ? '" + SITE_URL + "' : location.origin + location.pathname;\n    return base + '?' + p.toString();",
     )
-    # 5. EXE download must use the absolute live URL in a standalone file,
-    #    and must carry the sharecode: a bare download path gets 403 on a
-    #    visitor whose session cookie has not been set yet.
-    html = html.replace('href="download/wangzai-pet-exe.zip"',
-                        'href="' + SITE_URL + 'download/wangzai-pet-exe.zip?sharecode=' + SHARE_CODE + '"')
+    # 5. Embed the generic EXE engine so the single file can build a custom
+    #    EXE package with zero network requests. The multi-file build fetches
+    #    the same binary from download/wangzai-pet.exe instead.
+    engine = WEB / "download" / "wangzai-pet.exe"
+    if engine.exists():
+        b64 = base64.b64encode(engine.read_bytes()).decode("ascii")
+        html = html.replace("</body>",
+                            '<script type="text/plain" id="petEngineB64">'
+                            + b64 + "</script>\n</body>")
+        print("embedded EXE engine:", f"{len(b64)/1024/1024:.2f} MB of base64")
 
     # 6. Add a small offline notice so users understand what they have.
     notice = (

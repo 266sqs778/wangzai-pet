@@ -353,11 +353,30 @@
   }
 
   /* ---------------- export package ---------------- */
-  async function exportPack() {
-    const btn = $('#exportBtn');
+  function setExportProgress(ratio, text) {
+    const box = $('#exportProgress');
+    if (!box) return;
+    box.hidden = false;
+    box.classList.add('is-active');
+    const bar = $('#exportProgressBar');
+    if (bar) bar.style.width = Math.round(Math.max(0, Math.min(1, ratio)) * 100) + '%';
+    const label = $('#exportProgressText');
+    if (label && text) label.textContent = text;
+  }
+  function clearExportProgress() {
+    const box = $('#exportProgress');
+    if (!box) return;
+    box.classList.remove('is-active');
+    setTimeout(() => { if (!box.classList.contains('is-active')) box.hidden = true; }, 260);
+  }
+
+  async function exportPack(mode) {
+    const withExe = mode !== 'lite';
+    const btn = $(withExe ? '#exportExeBtn' : '#exportBtn');
     const original = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '正在打包素材…';
+    btn.textContent = withExe ? '正在制作专属 EXE…' : '正在打包素材…';
+    setExportProgress(0.04, withExe ? '正在准备专属桌宠…' : '正在准备素材…');
     try {
       const cfg = {
         name: state.name, species: state.species === 'my' ? 'my' : state.species,
@@ -369,23 +388,33 @@
         cfg,
         spriteNames: state.species === 'my' ? [] : (SPRITES[state.species] || SPRITES.cat),
         customCanvas: state.species === 'my' ? state.customCanvas : null,
+        withExe,
+        onProgress: setExportProgress,
       });
       const count = result.count;
       const url = URL.createObjectURL(result.blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'wangzai-pet.zip';
+      const safeName = (state.name || '望崽').replace(/[\\/:*?"<>|]/g, '').slice(0, 12);
+      a.download = withExe ? `望崽宠乐园-${safeName}-专属EXE.zip` : 'wangzai-pet.zip';
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 20000);
 
-      $('#packNote').textContent = `已生成：${count} 张动作图 + 配置 + 运行时。解压后双击 start.bat，${state.name} 就上桌啦。`;
-      toast('桌宠包已下载 · 解压后双击 start.bat');
+      setExportProgress(1, '已完成');
+      if (withExe) {
+        $('#packNote').textContent = `已生成：${state.name} 的专属 EXE 桌宠包（${count} 张动作帧 + 桌宠引擎）。解压后双击 wangzai-pet.exe，它就真的上桌了。`;
+        toast('专属 EXE 已下载 · 解压后双击 wangzai-pet.exe');
+      } else {
+        $('#packNote').textContent = `已生成：${count} 张动作图 + 配置 + 运行时。解压后双击 start.bat，${state.name} 就上桌啦。`;
+        toast('桌宠包已下载 · 解压后双击 start.bat');
+      }
       sfx.done();
     } catch (err) {
       toast('打包失败：' + (err && err.message ? err.message : '未知错误'));
     } finally {
+      setTimeout(clearExportProgress, 500);
       btn.disabled = false;
       btn.textContent = original;
     }
@@ -495,9 +524,16 @@
       toast('换成你家那只啦');
     });
 
-    $('#exportBtn').addEventListener('click', exportPack);
-    $('#importDesktop').addEventListener('click', () => { openConsole(); $('#exportBtn').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
-    $('#footerLaunch').addEventListener('click', () => { openConsole(); $('#exportBtn').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+    $('#exportBtn').addEventListener('click', () => exportPack('lite'));
+    const exeBtn = $('#exportExeBtn');
+    if (exeBtn) exeBtn.addEventListener('click', () => exportPack('exe'));
+    const jumpToExport = () => {
+      openConsole();
+      const target = $('#exportExeBtn') || $('#exportBtn');
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    $('#importDesktop').addEventListener('click', jumpToExport);
+    $('#footerLaunch').addEventListener('click', jumpToExport);
     $('#footerShare').addEventListener('click', () => copyText(shareUrl()).then((ok) => toast(ok ? '定制链接已复制，发给朋友吧' : '复制失败，请手动复制地址栏')));
     $('#shareBtn').addEventListener('click', () => copyText(shareUrl()).then((ok) => toast(ok ? '定制链接已复制，发给朋友吧' : '复制失败，请手动复制地址栏')));
     $('#toggleVisible').addEventListener('click', () => {

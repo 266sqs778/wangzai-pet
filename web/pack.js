@@ -120,7 +120,9 @@
     return cv;
   }
 
-  /* Soft circular sticker for a visitor's own photo (feathered alpha edge). */
+  /* Soft circular sticker for a visitor's own photo (feathered alpha edge).
+     Keeps real transparency: preview and the EXE need alpha, while the lite
+     BAT runtime converts it to a magenta colour key at export time. */
   function sticker(image, side) {
     const s = side || 320;
     const tmp = document.createElement('canvas');
@@ -137,14 +139,7 @@
     t.fillStyle = g;
     t.fillRect(0, 0, s, s);
     t.globalCompositeOperation = 'source-over';
-
-    const cv = document.createElement('canvas');
-    cv.width = s; cv.height = s;
-    const ctx = cv.getContext('2d');
-    ctx.fillStyle = '#ff00ff';
-    ctx.fillRect(0, 0, s, s);
-    ctx.drawImage(tmp, 0, 0);
-    return cv;
+    return tmp;
   }
 
   function canvasPngBytes(canvas) {

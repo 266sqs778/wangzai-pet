@@ -7,6 +7,10 @@
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
 
+  // Every species exposes the full ACTION_INDEX set (idle/walk/stretch/groom/sleep)
+  // so pressing an action always shows a distinct pose instead of clamping to
+  // idle or, worse, falling back to sleep. Cartoon poses are derived by
+  // generate_action_frames.py; see CHANGELOG.md for v1.1.0.
   const SPRITES = {
     cat:        ['cat_idle', 'cat_walk', 'cat_stretch', 'cat_groom', 'cat_sleep'],
     orange:     ['orange_idle', 'cat_walk', 'cat_stretch', 'cat_groom', 'orange_sleep'],
@@ -33,11 +37,62 @@
   ];
 
   const state = {
-    name: '望崽', species: 'cat', size: 220, speed: 2,
+    name: '望崽', species: 'cat', size: 220, speed: 2, pace: 1,
     auto: true, topmost: true, lines: DEFAULT_LINES.slice(),
     action: 'idle', customCanvas: null, customUrl: '',
+    photoImage: null, backgroundRemoved: false,
+    photoAnim: null, photoFrameUrls: null,
     syncGuard: false, drag: null, walkTimer: null,
+    previewTimer: null, autoTimer: null, frameIndex: 0,
   };
+
+  /* ---------------- sound feedback (Web Audio, no files) ---------------- */
+  /* Tiny synthesised blips so interactions feel alive without shipping any
+     audio or making a network request. Users can mute via #sfxToggle. */
+  const sfx = (() => {
+    let enabled = true;
+    let ctx = null;
+    try { enabled = localStorage.getItem('wz-sfx') !== 'off'; } catch (_) {}
+    function ac() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+    function tone(freq, dur, type = 'sine', vol = 0.05, delay = 0) {
+      if (!enabled) return;
+      const c = ac();
+      if (!c) return;
+      const t0 = c.currentTime + delay;
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    }
+    const api = {
+      isEnabled: () => enabled,
+      toggle() {
+        enabled = !enabled;
+        try { localStorage.setItem('wz-sfx', enabled ? 'on' : 'off'); } catch (_) {}
+        if (enabled) api.happy();
+        return enabled;
+      },
+      tap()    { tone(520, 0.09, 'sine', 0.05); },
+      happy()  { tone(620, 0.10, 'sine', 0.05); tone(880, 0.14, 'sine', 0.045, 0.09); },
+      action() { tone(440, 0.08, 'triangle', 0.045); tone(660, 0.10, 'triangle', 0.04, 0.07); },
+      done()   { tone(523, 0.10, 'sine', 0.05); tone(659, 0.10, 'sine', 0.05, 0.10); tone(784, 0.16, 'sine', 0.05, 0.20); },
+    };
+    return api;
+  })();
 
   const spriteFor = (species, action) => {
     const list = SPRITES[species] || SPRITES.cat;
@@ -45,8 +100,24 @@
     return list[idx];
   };
   const spriteSrc = (name) => `assets/pet/${name}.png`;
+  const MOTION_CLASSES = ['motion-idle', 'motion-walk', 'motion-stretch',
+                          'motion-groom', 'motion-sleep', 'motion-happy', 'motion-hello'];
 
-  function currentSrc(action) {
+  function photoFrameUrl(name) {
+    if (!state.photoAnim || !state.photoAnim.frames[name]) return state.customUrl;
+    if (!state.photoFrameUrls[name]) {
+      state.photoFrameUrls[name] = state.photoAnim.frames[name].toDataURL('image/png');
+    }
+    return state.photoFrameUrls[name];
+  }
+
+  function currentSrc(action, frameIndex) {
+    if (state.photoAnim) {
+      const anim = state.photoAnim.animations[action || state.action];
+      if (anim && anim.frames.length) {
+        return photoFrameUrl(anim.frames[(frameIndex || 0) % anim.frames.length]);
+      }
+    }
     if (state.species === 'my' && state.customUrl) return state.customUrl;
     return spriteSrc(spriteFor(state.species, action || state.action));
   }
@@ -54,22 +125,94 @@
   function toast(msg) {
     const el = $('#toast');
     el.textContent = msg;
-    el.classList.add('show');
+    el.classList.add('is-show');
     clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('show'), 2600);
+    el._t = setTimeout(() => el.classList.remove('is-show'), 2600);
   }
 
-  /* ---------------- preview ---------------- */
-  function renderPreview(action) {
-    const src = currentSrc(action);
-    $('#previewPetImg').src = src;
+  /* ---------------- motion helpers ---------------- */
+  function setOverlay(el, open) {
+    if (open) {
+      clearTimeout(el._hideT);
+      el.hidden = false;
+      requestAnimationFrame(() => el.classList.add('is-open'));
+    } else {
+      el.classList.remove('is-open');
+      clearTimeout(el._hideT);
+      el._hideT = setTimeout(() => {
+        if (!el.classList.contains('is-open')) el.hidden = true;
+      }, 240);
+    }
+  }
+
+  const _observed = new WeakSet();
+  function observeReveals() {
+    const els = Array.from(document.querySelectorAll('.reveal')).filter(
+      (el) => !el.classList.contains('is-visible') && !_observed.has(el)
+    );
+    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach((el) => el.classList.add('is-visible'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (en.isIntersecting) {
+          en.target.classList.add('is-visible');
+          io.unobserve(en.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -40px 0px', threshold: .08 });
+    els.forEach((el) => { _observed.add(el); io.observe(el); });
+  }
+
+  /* ---------------- preview: real looping animation ---------------- */
+  const AUTO_POOL = ['idle', 'walk', 'stretch', 'groom', 'happy', 'idle', 'walk', 'groom'];
+
+  function scheduleAuto(delay) {
+    clearTimeout(state.autoTimer);
+    if (!state.auto) return;
+    const d = delay == null ? (5200 + Math.random() * 3800) / state.pace : delay;
+    state.autoTimer = setTimeout(() => {
+      if (!state.auto) return;
+      renderPreview(AUTO_POOL[Math.floor(Math.random() * AUTO_POOL.length)]);
+    }, d);
+  }
+
+  function renderPreview(action, autoDelay) {
+    const act = action || state.action;
+    state.action = act;
+    clearInterval(state.previewTimer);
+    const img = $('#previewPetImg');
+    const petBox = $('#previewPet');
+    MOTION_CLASSES.forEach((c) => img.classList.remove(c));
+    img.style.transform = '';
+    state.frameIndex = 0;
+    const src = currentSrc(act, 0);
+    img.src = src;
     $('#consolePetImg').src = src;
+
+    const anim = state.photoAnim && state.photoAnim.animations[act];
+    if (anim && anim.frames.length > 1) {
+      // A visitor's own photo now has a genuine frame loop: play it back.
+      const fps = Math.max(0.5, Math.min(24, (anim.fps || 4) * state.pace));
+      state.previewTimer = setInterval(() => {
+        state.frameIndex = (state.frameIndex + 1) % anim.frames.length;
+        img.src = currentSrc(act, state.frameIndex);
+      }, Math.max(70, Math.round(1000 / fps)));
+    } else {
+      // Built-in pets animate with CSS keyframes around their real sprite.
+      img.classList.add('motion-' + (ACTION_INDEX[act] === undefined ? 'idle' : act));
+    }
+
+    petBox.classList.add('is-swapping');
+    requestAnimationFrame(() => requestAnimationFrame(() => petBox.classList.remove('is-swapping')));
     $('#previewTag').textContent = `${state.name} 在陪你`;
     const bubble = $('#previewBubble');
-    bubble.textContent = ACTION_WORDS[action] || `${state.name} 来陪你啦`;
-    bubble.classList.add('show');
+    bubble.textContent = ACTION_WORDS[act] || `${state.name} 来陪你啦`;
+    bubble.classList.add('is-show');
     clearTimeout(bubble._t);
-    bubble._t = setTimeout(() => bubble.classList.remove('show'), 2200);
+    bubble._t = setTimeout(() => bubble.classList.remove('is-show'), 2200);
+    scheduleAuto(autoDelay);
   }
 
   function renderLines() {
@@ -98,6 +241,8 @@
     $('#petSpeed').value = state.speed;
     $('#petAuto').checked = state.auto;
     $('#petTopmost').checked = state.topmost;
+    if ($('#petPace')) $('#petPace').value = state.pace;
+    if ($('#paceValue')) $('#paceValue').textContent = state.pace + '×';
     $('#sizeValue').textContent = state.size;
     $('#speedValue').textContent = state.speed;
     $('#previewPet').style.width = Math.min(state.size, 260) + 'px';
@@ -126,7 +271,7 @@
     GALLERY.forEach((g) => {
       const card = document.createElement('button');
       card.type = 'button';
-      card.className = 'gallery-card';
+      card.className = 'gallery-card reveal';
       card.innerHTML = `<div class="gallery-media"><img src="${g.img}" alt="${g.name}" loading="lazy" /><span class="gallery-tag">${g.tag}</span></div><div class="gallery-meta"><b>${g.name}</b><span>免费定制 →</span></div>`;
       card.addEventListener('click', () => {
         state.species = g.species;
@@ -137,21 +282,35 @@
       });
       grid.appendChild(card);
     });
+    observeReveals();
   }
 
   /* ---------------- console ---------------- */
   function openConsole() {
     $('#console').hidden = false;
     $('#consoleOverlay').hidden = false;
+    // Trigger the slide-in transition on the next frame so it animates from
+    // translateX(102%) to 0 (CSS keys off .is-open, not [hidden]).
+    requestAnimationFrame(() => {
+      $('#console').classList.add('is-open');
+      $('#consoleOverlay').classList.add('is-open');
+    });
     document.body.classList.add('console-open');
     if (new URLSearchParams(location.search).has('s')) {
-      history.replaceState(null, '', location.pathname);
+      try { history.replaceState(null, '', location.pathname + '?sharecode=' + currentShareCode()); } catch (e) {}
     }
   }
   function closeConsole() {
-    $('#console').hidden = true;
-    $('#consoleOverlay').hidden = true;
+    $('#console').classList.remove('is-open');
+    $('#consoleOverlay').classList.remove('is-open');
     document.body.classList.remove('console-open');
+    // Wait for the slide-out before hiding, otherwise the exit animation is cut.
+    setTimeout(() => {
+      if (!$('#console').classList.contains('is-open')) {
+        $('#console').hidden = true;
+        $('#consoleOverlay').hidden = true;
+      }
+    }, 400);
   }
 
   /* ---------------- drag preview ---------------- */
@@ -180,19 +339,29 @@
       d.moved = true;
     });
     pet.addEventListener('pointerup', () => {
-      if (state.drag && !state.drag.moved) renderPreview('happy');
+      if (state.drag && !state.drag.moved) { renderPreview('happy'); sfx.happy(); }
       state.drag = null;
       pet.classList.remove('is-dragging');
     });
   }
 
   /* ---------------- share link ---------------- */
+  /* The hosting platform requires a sharecode on the FIRST visit, otherwise
+     every subsequent asset request is blocked (403). Always carry it through
+     generated links, and never strip it from the address bar. */
+  const FALLBACK_SHARE_CODE = 'G672SI7TFH';
+  function currentShareCode() {
+    const sc = new URLSearchParams(location.search).get('sharecode');
+    return sc || FALLBACK_SHARE_CODE;
+  }
   function shareUrl() {
     const p = new URLSearchParams();
+    p.set('sharecode', currentShareCode());
     p.set('s', state.species === 'my' ? 'cat' : state.species);
     p.set('n', state.name);
     p.set('z', String(state.size));
     p.set('v', String(state.speed));
+    p.set('p', String(state.pace));
     p.set('a', state.auto ? '1' : '0');
     p.set('t', state.topmost ? '1' : '0');
     p.set('l', state.lines.join('|'));
@@ -205,6 +374,7 @@
     state.name = (q.get('n') || '望崽').slice(0, 12);
     state.size = Math.max(100, Math.min(420, Number(q.get('z')) || 220));
     state.speed = Math.max(1, Math.min(8, Number(q.get('v')) || 2));
+    state.pace = Math.max(0.5, Math.min(2, Number(q.get('p')) || 1));
     state.auto = q.get('a') !== '0';
     state.topmost = q.get('t') !== '0';
     if (q.get('l')) state.lines = q.get('l').split('|').filter(Boolean).slice(0, 12);
@@ -227,39 +397,75 @@
   }
 
   /* ---------------- export package ---------------- */
-  async function exportPack() {
-    const btn = $('#exportBtn');
+  function setExportProgress(ratio, text) {
+    const box = $('#exportProgress');
+    if (!box) return;
+    box.hidden = false;
+    box.classList.add('is-active');
+    const bar = $('#exportProgressBar');
+    if (bar) bar.style.width = Math.round(Math.max(0, Math.min(1, ratio)) * 100) + '%';
+    const label = $('#exportProgressText');
+    if (label && text) label.textContent = text;
+  }
+  function clearExportProgress() {
+    const box = $('#exportProgress');
+    if (!box) return;
+    box.classList.remove('is-active');
+    setTimeout(() => { if (!box.classList.contains('is-active')) box.hidden = true; }, 260);
+  }
+
+  async function exportPack(mode) {
+    const withExe = mode !== 'lite';
+    const btn = $(withExe ? '#exportExeBtn' : '#exportBtn');
     const original = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '正在打包素材…';
+    btn.textContent = withExe ? '正在制作专属 EXE…' : '正在打包素材…';
+    setExportProgress(0.04, withExe ? '正在准备专属桌宠…' : '正在准备素材…');
     try {
+      // Safety net: once a visitor has uploaded a photo, their export is
+      // ALWAYS that photo. Switching the dropdown to a built-in later is a
+      // preview-only whim; the promise "your photo becomes your EXE" wins.
       const usingPhoto = !!state.customCanvas;
+      const exportSpecies = usingPhoto ? 'my' : state.species;
       const cfg = {
-        name: state.name, species: usingPhoto ? 'my' : state.species,
+        name: state.name, species: exportSpecies,
         size: state.size, speed: state.speed, auto: state.auto,
-        topmost: state.topmost, lines: state.lines,
-        note: 'Generated by Wangzai Pet Paradise customiser',
+        topmost: state.topmost, pace: state.pace, lines: state.lines,
+        note: 'Generated by Wangzai Pet Paradise customiser · v1.5.0 animated',
       };
       const result = await PET_EXPORT.buildPackage({
         cfg,
         spriteNames: usingPhoto ? [] : (SPRITES[state.species] || SPRITES.cat),
         customCanvas: usingPhoto ? state.customCanvas : null,
+        customFrames: usingPhoto && state.photoAnim ? state.photoAnim.frames : null,
+        animations: usingPhoto && state.photoAnim ? state.photoAnim.animations : null,
+        withExe,
+        onProgress: setExportProgress,
       });
       const count = result.count;
       const url = URL.createObjectURL(result.blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'wangzai-pet.zip';
+      const safeName = (state.name || '望崽').replace(/[\\/:*?"<>|]/g, '').slice(0, 12);
+      a.download = withExe ? `望崽宠乐园-${safeName}-专属EXE.zip` : 'wangzai-pet.zip';
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 20000);
 
-      $('#packNote').textContent = `已生成：${count} 张动作图 + 配置 + 运行时。解压后双击 start.bat，${state.name} 就上桌啦。`;
-      toast('桌宠包已下载 · 解压后双击 start.bat');
+      setExportProgress(1, '已完成');
+      if (withExe) {
+        $('#packNote').textContent = `已生成：${state.name} 的专属 EXE 桌宠包（${count} 张动作帧 + 桌宠引擎）。解压后双击 wangzai-pet.exe，它就真的上桌了。`;
+        toast('专属 EXE 已下载 · 解压后双击 wangzai-pet.exe');
+      } else {
+        $('#packNote').textContent = `已生成：${count} 张动作图 + 配置 + 运行时。解压后双击 start.bat，${state.name} 就上桌啦。`;
+        toast('桌宠包已下载 · 解压后双击 start.bat');
+      }
+      sfx.done();
     } catch (err) {
       toast('打包失败：' + (err && err.message ? err.message : '未知错误'));
     } finally {
+      setTimeout(clearExportProgress, 500);
       btn.disabled = false;
       btn.textContent = original;
     }
@@ -268,13 +474,26 @@
   /* ---------------- photo upload ---------------- */
   function applyCustomPhoto() {
     if (!state.customCanvas) return;
+    // Uploading a photo means "this is my pet" — apply it everywhere, now.
+    // No extra hidden button should stand between a photo and the EXE.
     state.species = 'my';
-    const sel = $('#petSpecies'); if (sel) sel.value = 'my';
+    const sel = $('#petSpecies');
+    if (sel) sel.value = 'my';
     state.action = 'idle';
     renderPreview();
     $('#applyPhoto').disabled = true;
-    toast('已换成你家那只 · 现在就能生成桌宠包');
+    $('#applyPhoto').textContent = '已应用';
+    const note = $('#photoNote');
+    if (note) {
+      note.textContent = (state.backgroundRemoved
+        ? '已去掉背景并裁好。'
+        : '已裁成圆形贴纸。') +
+        '已生成 6 套动作、40 帧循环动画：发呆会呼吸，还会散步、伸懒腰、舔毛、睡觉、开心跳。';
+      note.hidden = false;
+    }
+    toast('已换成你家那只 · 现在就能生成专属 EXE');
   }
+
   function processPhoto(im) {
     state.photoImage = im;
     const removeBg = $('#removeBg') ? $('#removeBg').checked : true;
@@ -282,10 +501,15 @@
     state.customCanvas = out.canvas;
     state.backgroundRemoved = out.backgroundRemoved;
     state.customUrl = state.customCanvas.toDataURL('image/png');
+    // Render all six behaviours once; the live preview and the EXE export
+    // share the exact same frames, so what you see is what you download.
+    state.photoAnim = PET_PACK.buildAnimationFrames(state.customCanvas);
+    state.photoFrameUrls = {};
     $('#photoPreviewImg').src = state.customUrl;
     $('#photoPreview').hidden = false;
     applyCustomPhoto();
   }
+
   function handlePhoto(file) {
     if (!file || !file.type.startsWith('image/')) return toast('请选择一张图片');
     const reader = new FileReader();
@@ -315,14 +539,22 @@
     }));
 
     $$('.action-btn').forEach((b) => b.addEventListener('click', () => {
-      state.action = b.dataset.action;
-      renderPreview(state.action);
+      renderPreview(b.dataset.action, 4200);
+      sfx.action();
     }));
     $$('.pose').forEach((b) => b.addEventListener('click', () => {
-      state.action = b.dataset.action === 'stretch' ? 'stretch' : b.dataset.action === 'groom' ? 'groom' : 'idle';
-      renderPreview(state.action);
+      const a = b.dataset.action === 'stretch' ? 'stretch' : b.dataset.action === 'groom' ? 'groom' : 'idle';
+      renderPreview(a, 4200);
+      sfx.action();
       toast('这是网页预览，导出后它也会这些本领');
     }));
+
+    const sfxBtn = $('#sfxToggle');
+    if (sfxBtn) {
+      const paint = () => { sfxBtn.textContent = sfx.isEnabled() ? '♪ 音效开' : '♪ 音效关'; };
+      paint();
+      sfxBtn.addEventListener('click', () => { sfx.toggle(); paint(); });
+    }
 
     $('#petName').addEventListener('input', (e) => {
       state.name = e.target.value.trim() || '望崽';
@@ -347,8 +579,18 @@
       state.speed = Number(e.target.value);
       $('#speedValue').textContent = state.speed;
     });
-    $('#petAuto').addEventListener('change', (e) => { state.auto = e.target.checked; });
+    $('#petAuto').addEventListener('change', (e) => {
+      state.auto = e.target.checked;
+      if (state.auto) scheduleAuto(2000);
+      else clearTimeout(state.autoTimer);
+    });
     $('#petTopmost').addEventListener('change', (e) => { state.topmost = e.target.checked; });
+    const paceInput = $('#petPace');
+    if (paceInput) paceInput.addEventListener('input', (e) => {
+      state.pace = Number(e.target.value);
+      $('#paceValue').textContent = state.pace + '×';
+      renderPreview(state.action, 4200);
+    });
 
     $('#sayBtn').addEventListener('click', () => {
       const v = $('#sayText').value.trim();
@@ -370,9 +612,16 @@
     });
     $('#applyPhoto').addEventListener('click', applyCustomPhoto);
 
-    $('#exportBtn').addEventListener('click', exportPack);
-    $('#importDesktop').addEventListener('click', () => { openConsole(); $('#exportBtn').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
-    $('#footerLaunch').addEventListener('click', () => { openConsole(); $('#exportBtn').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+    $('#exportBtn').addEventListener('click', () => exportPack('lite'));
+    const exeBtn = $('#exportExeBtn');
+    if (exeBtn) exeBtn.addEventListener('click', () => exportPack('exe'));
+    const jumpToExport = () => {
+      openConsole();
+      const target = $('#exportExeBtn') || $('#exportBtn');
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    $('#importDesktop').addEventListener('click', jumpToExport);
+    $('#footerLaunch').addEventListener('click', jumpToExport);
     $('#footerShare').addEventListener('click', () => copyText(shareUrl()).then((ok) => toast(ok ? '定制链接已复制，发给朋友吧' : '复制失败，请手动复制地址栏')));
     $('#shareBtn').addEventListener('click', () => copyText(shareUrl()).then((ok) => toast(ok ? '定制链接已复制，发给朋友吧' : '复制失败，请手动复制地址栏')));
     $('#toggleVisible').addEventListener('click', () => {
@@ -382,14 +631,77 @@
     });
     $('#quitPet').addEventListener('click', () => {
       state.name = '望崽'; state.species = 'cat'; state.size = 220; state.speed = 2;
-      state.auto = true; state.topmost = true; state.action = 'idle';
+      state.auto = true; state.topmost = true; state.action = 'idle'; state.pace = 1;
       state.lines = DEFAULT_LINES.slice(); state.customCanvas = null; state.customUrl = '';
       state.photoImage = null; state.backgroundRemoved = false;
+      state.photoAnim = null; state.photoFrameUrls = {};
+      clearInterval(state.previewTimer); clearTimeout(state.autoTimer);
       $('#photoPreview').hidden = true;
+      const pnote = $('#photoNote'); if (pnote) pnote.hidden = true;
       $('#applyPhoto').disabled = true;
-      $('#packNote').textContent = '包内文件名使用英文，避免解压乱码；中文说明见 README.txt。';
+      $('#applyPhoto').textContent = '应用到预览';
+      $('#packNote').textContent = '「我的分享码」会把当前定制生成专属二维码，朋友扫码直接看到这只宠物。';
       applyState();
       toast('已恢复默认设置');
+    });
+  }
+
+  /* ---------------- share QR + contact modal ---------------- */
+  function qrDataUrl(text, size) {
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    const cells = qr.getModuleCount();
+    const quiet = 4, scale = Math.max(2, Math.floor(size / (cells + quiet * 2)));
+    const total = (cells + quiet * 2) * scale;
+    const cv = document.createElement('canvas');
+    cv.width = total; cv.height = total;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, total, total);
+    ctx.fillStyle = '#29231d';
+    for (let r = 0; r < cells; r++) {
+      for (let c = 0; c < cells; c++) {
+        if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+      }
+    }
+    return cv.toDataURL('image/png');
+  }
+
+  function openQr() {
+    const url = shareUrl();
+    const name = state.name || '望崽';
+    $('#qrTitle').textContent = '扫码看「' + name + '」这只桌宠';
+    $('#qrCodeImg').src = qrDataUrl(url, 480);
+    setOverlay($('#qrOverlay'), true);
+  }
+  function closeQr() { setOverlay($('#qrOverlay'), false); }
+
+  function openContact() { setOverlay($('#contactOverlay'), true); }
+  function closeContact() { setOverlay($('#contactOverlay'), false); }
+
+  function bindQr() {
+    $('#myQrBtn').addEventListener('click', openQr);
+    $('#myQrBtnFoot').addEventListener('click', openQr);
+    $('#contactBtn').addEventListener('click', openContact);
+    const headerContact = $('#headerContactBtn');
+    if (headerContact) headerContact.addEventListener('click', openContact);
+    $('#closeQr').addEventListener('click', closeQr);
+    $('#closeContact').addEventListener('click', closeContact);
+    $('#qrOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeQr(); });
+    $('#contactOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeContact(); });
+    $('#copyQrLink').addEventListener('click', () => copyText(shareUrl()).then((ok) => toast(ok ? '定制链接已复制，发给朋友吧' : '复制失败，请手动复制地址栏')));
+    $('#downloadQr').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = $('#qrCodeImg').src;
+      a.download = 'wangzai-share-' + (state.name || 'wangzai') + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast('二维码已保存，发到微信群/朋友圈就能引流');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeQr(); closeContact(); }
     });
   }
 
@@ -399,8 +711,11 @@
   }
 
   function init() {
+    const dbgQr = new URLSearchParams(location.search).get('qr');
     renderGallery();
+    observeReveals();
     bind();
+    bindQr();
     initDrag();
     const restored = restoreFromUrl();
     applyState();
@@ -410,6 +725,8 @@
       openConsole();
       toast('已还原朋友分享的定制');
     }
+    if (dbgQr === '1') setTimeout(openQr, 400);
+    if (dbgQr === 'contact') setTimeout(openContact, 400);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

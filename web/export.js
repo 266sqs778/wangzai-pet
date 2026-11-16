@@ -108,7 +108,15 @@
     const customCanvas = opts.customCanvas || null;
     const withExe = !!opts.withExe;
     const onProgress = opts.onProgress || function () {};
-    const files = [{ name: 'pet-config.json', data: JSON.stringify(cfg, null, 2) }];
+    const files = [];
+    const used = new Set();
+    const addSprite = async (name, source) => {
+      if (used.has(name) || !source) return;
+      used.add(name);
+      // WinForms needs a magenta colour key; the Python EXE uses real alpha.
+      const cv = withExe ? asCanvas(source) : global.PET_PACK.magentaKey(source, 320);
+      files.push({ name: 'assets/pet/' + name + '.png', data: await global.PET_PACK.canvasPngBytes(cv) });
+    };
 
     if (withExe) {
       const engine = await getEngine(onProgress);
@@ -121,18 +129,20 @@
     }
 
     onProgress(0.68, '正在生成动作帧…');
-    const used = new Set();
-    const addSprite = async (name, source) => {
-      if (used.has(name)) return;
-      used.add(name);
-      // WinForms needs a magenta colour key; the Python EXE uses real alpha.
-      const cv = withExe ? asCanvas(source) : global.PET_PACK.magentaKey(source, 320);
-      files.push({ name: 'assets/pet/' + name + '.png', data: await global.PET_PACK.canvasPngBytes(cv) });
-    };
 
+    /* A visitor's photo gets real multi-frame loops. Reuse the frames the
+       live preview already rendered when available; otherwise derive them
+       here. The EXE engine reads `animations` from pet-config.json and plays
+       them back at the configured fps. The lite BAT runtime only handles a
+       single frame per action, so it keeps the compact four-pose set. */
     if (customCanvas) {
-      const poses = global.PET_PACK.derivePoses(customCanvas);
-      for (const name of Object.keys(poses)) await addSprite(name, poses[name]);
+      const built = withExe
+        ? (opts.customFrames && opts.animations
+            ? { frames: opts.customFrames, animations: opts.animations }
+            : global.PET_PACK.buildAnimationFrames(customCanvas))
+        : { frames: global.PET_PACK.derivePoses(customCanvas), animations: null };
+      if (withExe && built.animations) cfg.animations = built.animations;
+      for (const name of Object.keys(built.frames)) await addSprite(name, built.frames[name]);
     } else {
       for (const n of names) {
         try { await addSprite(n, await loadSprite(n, opts)); }
@@ -150,6 +160,8 @@
     }
     if (!used.size) throw new Error('没有可用的素材');
 
+    // Serialise last so the animation map is included when present.
+    files.unshift({ name: 'pet-config.json', data: JSON.stringify(cfg, null, 2) });
     onProgress(0.9, '正在打包…');
     const blob = global.PET_PACK.buildZip(files);
     return { blob, count: used.size, fileNames: files.map((f) => f.name), withExe };

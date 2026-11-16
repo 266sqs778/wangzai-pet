@@ -37,11 +37,13 @@
   ];
 
   const state = {
-    name: '望崽', species: 'cat', size: 220, speed: 2,
+    name: '望崽', species: 'cat', size: 220, speed: 2, pace: 1,
     auto: true, topmost: true, lines: DEFAULT_LINES.slice(),
     action: 'idle', customCanvas: null, customUrl: '',
     photoImage: null, backgroundRemoved: false,
+    photoAnim: null, photoFrameUrls: null,
     syncGuard: false, drag: null, walkTimer: null,
+    previewTimer: null, autoTimer: null, frameIndex: 0,
   };
 
   /* ---------------- sound feedback (Web Audio, no files) ---------------- */
@@ -98,8 +100,24 @@
     return list[idx];
   };
   const spriteSrc = (name) => `assets/pet/${name}.png`;
+  const MOTION_CLASSES = ['motion-idle', 'motion-walk', 'motion-stretch',
+                          'motion-groom', 'motion-sleep', 'motion-happy', 'motion-hello'];
 
-  function currentSrc(action) {
+  function photoFrameUrl(name) {
+    if (!state.photoAnim || !state.photoAnim.frames[name]) return state.customUrl;
+    if (!state.photoFrameUrls[name]) {
+      state.photoFrameUrls[name] = state.photoAnim.frames[name].toDataURL('image/png');
+    }
+    return state.photoFrameUrls[name];
+  }
+
+  function currentSrc(action, frameIndex) {
+    if (state.photoAnim) {
+      const anim = state.photoAnim.animations[action || state.action];
+      if (anim && anim.frames.length) {
+        return photoFrameUrl(anim.frames[(frameIndex || 0) % anim.frames.length]);
+      }
+    }
     if (state.species === 'my' && state.customUrl) return state.customUrl;
     return spriteSrc(spriteFor(state.species, action || state.action));
   }
@@ -147,33 +165,54 @@
     els.forEach((el) => { _observed.add(el); io.observe(el); });
   }
 
-  /* ---------------- preview ---------------- */
-  function renderPreview(action) {
-    const src = currentSrc(action);
+  /* ---------------- preview: real looping animation ---------------- */
+  const AUTO_POOL = ['idle', 'walk', 'stretch', 'groom', 'happy', 'idle', 'walk', 'groom'];
+
+  function scheduleAuto(delay) {
+    clearTimeout(state.autoTimer);
+    if (!state.auto) return;
+    const d = delay == null ? (5200 + Math.random() * 3800) / state.pace : delay;
+    state.autoTimer = setTimeout(() => {
+      if (!state.auto) return;
+      renderPreview(AUTO_POOL[Math.floor(Math.random() * AUTO_POOL.length)]);
+    }, d);
+  }
+
+  function renderPreview(action, autoDelay) {
+    const act = action || state.action;
+    state.action = act;
+    clearInterval(state.previewTimer);
     const img = $('#previewPetImg');
+    const petBox = $('#previewPet');
+    MOTION_CLASSES.forEach((c) => img.classList.remove(c));
+    img.style.transform = '';
+    state.frameIndex = 0;
+    const src = currentSrc(act, 0);
     img.src = src;
     $('#consolePetImg').src = src;
-    // A visitor's own photo has no frame sheet, so animate it with a transform
-    // that mirrors the exported poses (stretch/lean). Built-in species already
-    // swap to a real frame and therefore keep a neutral transform.
-    img.style.transform = '';
-    // Crossfade the swap. A transition retargets on rapid clicks; keyframes would restart.
-    const petBox = $('#previewPet');
+
+    const anim = state.photoAnim && state.photoAnim.animations[act];
+    if (anim && anim.frames.length > 1) {
+      // A visitor's own photo now has a genuine frame loop: play it back.
+      const fps = Math.max(0.5, Math.min(24, (anim.fps || 4) * state.pace));
+      state.previewTimer = setInterval(() => {
+        state.frameIndex = (state.frameIndex + 1) % anim.frames.length;
+        img.src = currentSrc(act, state.frameIndex);
+      }, Math.max(70, Math.round(1000 / fps)));
+    } else {
+      // Built-in pets animate with CSS keyframes around their real sprite.
+      img.classList.add('motion-' + (ACTION_INDEX[act] === undefined ? 'idle' : act));
+    }
+
     petBox.classList.add('is-swapping');
     requestAnimationFrame(() => requestAnimationFrame(() => petBox.classList.remove('is-swapping')));
-    if (state.species === 'my' && state.customUrl) {
-      if (action === 'stretch') img.style.transform = 'scaleY(1.16) scaleX(.94) translateY(3%)';
-      else if (action === 'groom') img.style.transform = 'rotate(11deg) scale(.96)';
-      else if (action === 'walk') img.style.transform = 'rotate(4deg) scale(.98)';
-      else if (action === 'happy') img.style.transform = 'scale(1.08)';
-      setTimeout(() => { img.style.transform = ''; }, 900);
-    }
     $('#previewTag').textContent = `${state.name} 在陪你`;
     const bubble = $('#previewBubble');
-    bubble.textContent = ACTION_WORDS[action] || `${state.name} 来陪你啦`;
+    bubble.textContent = ACTION_WORDS[act] || `${state.name} 来陪你啦`;
     bubble.classList.add('is-show');
     clearTimeout(bubble._t);
     bubble._t = setTimeout(() => bubble.classList.remove('is-show'), 2200);
+    scheduleAuto(autoDelay);
   }
 
   function renderLines() {
@@ -202,6 +241,8 @@
     $('#petSpeed').value = state.speed;
     $('#petAuto').checked = state.auto;
     $('#petTopmost').checked = state.topmost;
+    if ($('#petPace')) $('#petPace').value = state.pace;
+    if ($('#paceValue')) $('#paceValue').textContent = state.pace + '×';
     $('#sizeValue').textContent = state.size;
     $('#speedValue').textContent = state.speed;
     $('#previewPet').style.width = Math.min(state.size, 260) + 'px';
@@ -320,6 +361,7 @@
     p.set('n', state.name);
     p.set('z', String(state.size));
     p.set('v', String(state.speed));
+    p.set('p', String(state.pace));
     p.set('a', state.auto ? '1' : '0');
     p.set('t', state.topmost ? '1' : '0');
     p.set('l', state.lines.join('|'));
@@ -332,6 +374,7 @@
     state.name = (q.get('n') || '望崽').slice(0, 12);
     state.size = Math.max(100, Math.min(420, Number(q.get('z')) || 220));
     state.speed = Math.max(1, Math.min(8, Number(q.get('v')) || 2));
+    state.pace = Math.max(0.5, Math.min(2, Number(q.get('p')) || 1));
     state.auto = q.get('a') !== '0';
     state.topmost = q.get('t') !== '0';
     if (q.get('l')) state.lines = q.get('l').split('|').filter(Boolean).slice(0, 12);
@@ -387,13 +430,15 @@
       const cfg = {
         name: state.name, species: exportSpecies,
         size: state.size, speed: state.speed, auto: state.auto,
-        topmost: state.topmost, lines: state.lines,
-        note: 'Generated by Wangzai Pet Paradise customiser',
+        topmost: state.topmost, pace: state.pace, lines: state.lines,
+        note: 'Generated by Wangzai Pet Paradise customiser · v1.5.0 animated',
       };
       const result = await PET_EXPORT.buildPackage({
         cfg,
         spriteNames: usingPhoto ? [] : (SPRITES[state.species] || SPRITES.cat),
         customCanvas: usingPhoto ? state.customCanvas : null,
+        customFrames: usingPhoto && state.photoAnim ? state.photoAnim.frames : null,
+        animations: usingPhoto && state.photoAnim ? state.photoAnim.animations : null,
         withExe,
         onProgress: setExportProgress,
       });
@@ -440,9 +485,10 @@
     $('#applyPhoto').textContent = '已应用';
     const note = $('#photoNote');
     if (note) {
-      note.textContent = state.backgroundRemoved
-        ? '已去掉背景并裁好，预览和导出的 EXE 都是这一只。'
-        : '已裁成圆形贴纸，预览和导出的 EXE 都是这一只。';
+      note.textContent = (state.backgroundRemoved
+        ? '已去掉背景并裁好。'
+        : '已裁成圆形贴纸。') +
+        '已生成 6 套动作、40 帧循环动画：发呆会呼吸，还会散步、伸懒腰、舔毛、睡觉、开心跳。';
       note.hidden = false;
     }
     toast('已换成你家那只 · 现在就能生成专属 EXE');
@@ -455,6 +501,10 @@
     state.customCanvas = out.canvas;
     state.backgroundRemoved = out.backgroundRemoved;
     state.customUrl = state.customCanvas.toDataURL('image/png');
+    // Render all six behaviours once; the live preview and the EXE export
+    // share the exact same frames, so what you see is what you download.
+    state.photoAnim = PET_PACK.buildAnimationFrames(state.customCanvas);
+    state.photoFrameUrls = {};
     $('#photoPreviewImg').src = state.customUrl;
     $('#photoPreview').hidden = false;
     applyCustomPhoto();
@@ -489,13 +539,12 @@
     }));
 
     $$('.action-btn').forEach((b) => b.addEventListener('click', () => {
-      state.action = b.dataset.action;
-      renderPreview(state.action);
+      renderPreview(b.dataset.action, 4200);
       sfx.action();
     }));
     $$('.pose').forEach((b) => b.addEventListener('click', () => {
-      state.action = b.dataset.action === 'stretch' ? 'stretch' : b.dataset.action === 'groom' ? 'groom' : 'idle';
-      renderPreview(state.action);
+      const a = b.dataset.action === 'stretch' ? 'stretch' : b.dataset.action === 'groom' ? 'groom' : 'idle';
+      renderPreview(a, 4200);
       sfx.action();
       toast('这是网页预览，导出后它也会这些本领');
     }));
@@ -530,8 +579,18 @@
       state.speed = Number(e.target.value);
       $('#speedValue').textContent = state.speed;
     });
-    $('#petAuto').addEventListener('change', (e) => { state.auto = e.target.checked; });
+    $('#petAuto').addEventListener('change', (e) => {
+      state.auto = e.target.checked;
+      if (state.auto) scheduleAuto(2000);
+      else clearTimeout(state.autoTimer);
+    });
     $('#petTopmost').addEventListener('change', (e) => { state.topmost = e.target.checked; });
+    const paceInput = $('#petPace');
+    if (paceInput) paceInput.addEventListener('input', (e) => {
+      state.pace = Number(e.target.value);
+      $('#paceValue').textContent = state.pace + '×';
+      renderPreview(state.action, 4200);
+    });
 
     $('#sayBtn').addEventListener('click', () => {
       const v = $('#sayText').value.trim();
@@ -572,9 +631,11 @@
     });
     $('#quitPet').addEventListener('click', () => {
       state.name = '望崽'; state.species = 'cat'; state.size = 220; state.speed = 2;
-      state.auto = true; state.topmost = true; state.action = 'idle';
+      state.auto = true; state.topmost = true; state.action = 'idle'; state.pace = 1;
       state.lines = DEFAULT_LINES.slice(); state.customCanvas = null; state.customUrl = '';
       state.photoImage = null; state.backgroundRemoved = false;
+      state.photoAnim = null; state.photoFrameUrls = {};
+      clearInterval(state.previewTimer); clearTimeout(state.autoTimer);
       $('#photoPreview').hidden = true;
       const pnote = $('#photoNote'); if (pnote) pnote.hidden = true;
       $('#applyPhoto').disabled = true;

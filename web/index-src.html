@@ -277,6 +277,7 @@
 
     <fieldset class="control-group">
       <legend data-step="02">看看它的本领</legend>
+      <p class="group-hint">点一下就播放。<b>它自己也会换动作</b>：散步、伸懒腰、舔毛、睡觉、开心跳，还会冒出小表情。</p>
       <div class="action-grid">
         <button class="action-btn" data-action="idle">发呆</button>
         <button class="action-btn" data-action="walk">散步</button>
@@ -294,6 +295,7 @@
       <legend data-step="03">手感</legend>
       <label class="slider-field"><span>大小 <b id="sizeValue">220</b></span><input id="petSize" type="range" min="100" max="420" step="10" value="220" /></label>
       <label class="slider-field"><span>走动速度 <b id="speedValue">2</b></span><input id="petSpeed" type="range" min="1" max="8" step="1" value="2" /></label>
+      <label class="slider-field"><span>动作节奏 <b id="paceValue">1×</b></span><input id="petPace" type="range" min="0.5" max="2" step="0.25" value="1" /></label>
       <div class="switch-row">
         <label><input type="checkbox" id="petAuto" checked /> 自动换动作</label>
         <label><input type="checkbox" id="petTopmost" checked /> 窗口置顶</label>
@@ -314,7 +316,7 @@
 
     <fieldset class="control-group export-group">
       <legend data-step="05">带上它回家</legend>
-      <p class="group-hint">把上面这只打包成 <b>你的专属 EXE 桌宠</b>：桌宠引擎 + 由照片生成的动作帧 + 配置一起装进 ZIP。解压后双击 <code>wangzai-pet.exe</code> 就上桌，不用装 Python、不用联网。</p>
+      <p class="group-hint">把上面这只打包成 <b>你的专属 EXE 桌宠</b>：桌宠引擎 + 由照片生成的 <b>6 套动作 / 40 帧循环动画</b> + 配置一起装进 ZIP。它会呼吸、散步、伸懒腰、舔毛、睡觉、开心跳，也会自己找乐子。解压后双击 <code>wangzai-pet.exe</code> 就上桌，不用装 Python、不用联网。</p>
       <button class="btn btn-primary btn-block" id="exportExeBtn">⬇ 生成我的专属 EXE 桌宠包</button>
       <div class="export-progress" id="exportProgress" hidden>
         <div class="export-progress__label" id="exportProgressText">正在准备…</div>

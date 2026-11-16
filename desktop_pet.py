@@ -36,12 +36,30 @@ RUNTIME = ROOT / "runtime.json"
 KEY_COLOR = "#ff00ff"          # colour-key transparency (Windows)
 WARM = (246, 238, 226, 255)    # edge matte, keeps fur from getting a dark fringe
 BUBBLE_H = 54
+TAU = math.tau
+PHASES = 8                     # cached procedural animation steps per action
 
 DEFAULTS = {
     "name": "望崽", "species": "cat", "size": 220, "speed": 2,
     "opacity": 1.0, "topmost": True, "auto": True, "visible": True,
-    "action": "idle", "seq": 0, "command": {"type": "idle"},
+    "action": "idle", "seq": 0, "command": {"type": "idle"}, "pace": 1.0,
     "lines": ["在呢，一直都在。", "今天也要好好工作呀～", "摸摸我就有精神啦！"],
+}
+
+# v1.5.0: built-in pets have only one file per action, so the engine derives
+# eight cached poses per action at runtime. Photo pets ship a real frame map
+# in pet-config.json and skip this path.
+MOTION = {
+    "idle": "breathe", "walk": "walk", "stretch": "stretch",
+    "groom": "groom", "sleep": "sleep", "happy": "happy",
+}
+ACTION_LINES = {
+    "idle": ["发会儿呆也不错～", "我一直都在哦。", "在看什么呢？"],
+    "walk": ["出去溜达一圈～", "带我散步呀！", "今天天气不错嘛。"],
+    "stretch": ["伸个懒腰，精神啦！", "睡醒啦～"],
+    "groom": ["整理一下毛毛～", "干净了，舒服！"],
+    "sleep": ["困啦，我先眯一会儿…", "别吵，做个好梦。"],
+    "happy": ["嘿嘿，好开心！", "再摸一下嘛～", "最喜欢你了！"],
 }
 
 # v1.1.0: every species now maps each action to a distinct frame. The cartoon
@@ -62,6 +80,54 @@ ACTION_LABELS = {
     "idle": "发呆", "walk": "散步", "stretch": "伸懒腰",
     "groom": "舔毛毛", "sleep": "睡觉", "happy": "摸摸", "feed": "喂零食",
 }
+
+
+def transform_rgba(img: Image.Image, rot: float = 0.0, sx: float = 1.0,
+                   sy: float = 1.0, dx: int = 0, dy: int = 0) -> Image.Image:
+    """Rotate/scale/translate an RGBA sprite without clipping or fringes."""
+    w, h = img.size
+    pad = int(max(w, h) * 0.24) + 8
+    big = Image.new("RGBA", (w + 2 * pad, h + 2 * pad), (0, 0, 0, 0))
+    big.alpha_composite(img, (pad, pad))
+    if rot:
+        big = big.rotate(rot, resample=Image.BICUBIC, expand=False,
+                         fillcolor=(0, 0, 0, 0))
+    if abs(sx - 1.0) > 1e-6 or abs(sy - 1.0) > 1e-6:
+        big = big.resize((max(1, round(big.width * sx)),
+                          max(1, round(big.height * sy))), Image.LANCZOS)
+    cx, cy = big.width // 2, big.height // 2
+    left, top = cx - w // 2 + int(dx), cy - h // 2 + int(dy)
+    return big.crop((left, top, left + w, top + h))
+
+
+def motion_frame(img: Image.Image, motion: str, phase: int) -> Image.Image:
+    """One of PHASES derived poses for a built-in, single-file sprite."""
+    t = phase / PHASES * TAU
+    if motion == "breathe":
+        s = 1 + 0.028 * math.sin(t)
+        blink = 0.955 if phase == PHASES // 2 + 1 else 1.0
+        return transform_rgba(img, sx=s + (0.008 if blink < 1 else 0),
+                              sy=s * blink, dy=round(1.5 * math.sin(t)))
+    if motion == "walk":
+        return transform_rgba(img, rot=5 * math.sin(t),
+                              dy=round(-2.6 * abs(math.sin(t))),
+                              sx=1 + 0.012 * math.cos(t))
+    if motion == "stretch":
+        k = math.sin(t / 2) ** 2          # 0 -> 1 -> 0 over half a cycle
+        sy, sx = 1 + 0.18 * k, 1 - 0.06 * k
+        return transform_rgba(img, sx=sx, sy=sy, dy=round(-(sy - 1) * img.height / 2))
+    if motion == "groom":
+        k = math.sin(t / 2) ** 2
+        return transform_rgba(img, rot=12 * k, sy=1 - 0.03 * k, dy=round(2 * k))
+    if motion == "sleep":
+        return transform_rgba(img, sy=1 + 0.022 * math.sin(t),
+                              sx=1 - 0.01 * math.sin(t), dy=round(1.2 * math.sin(t)))
+    if motion == "happy":
+        hop = abs(math.sin(t * 2))
+        s = 1 + 0.06 * hop
+        return transform_rgba(img, rot=7 * math.sin(t * 2), sx=s, sy=s,
+                              dy=round(-10 * hop))
+    return img
 
 
 def load_config() -> dict:
@@ -90,12 +156,16 @@ class DesktopPet:
         self.size = int(self.cfg["size"])
         self.state = "idle"
         self.state_until = 0.0
+        self.state_start = time.time()     # animation clock for the current pose
+        self.animations = self.cfg.get("animations") or {}
+        self.pace = max(0.5, min(2.0, float(self.cfg.get("pace", 1) or 1)))
         self.seq = int(self.cfg.get("seq", 0))
         self.face = 1                      # 1 = right, -1 = left
         self.tick_n = 0
         self.bubble_until = 0.0
         self.hearts = []
         self.last_auto = time.time()
+        self.next_auto = time.time() + random.uniform(4, 8)
         self.photo_cache = {}
         self._drag = None
         self._settings_win = None
@@ -145,8 +215,9 @@ class DesktopPet:
         self.root.after(60, self.tick)
 
     # ---------- rendering ----------
-    def build_photo(self, stem: str, size: int, face: int) -> tk.PhotoImage:
-        key = (stem, size, face)
+    def build_photo(self, stem: str, size: int, face: int,
+                    phase: int = 0, motion: str = "") -> tk.PhotoImage:
+        key = (stem, size, face, phase, motion)
         if key in self.photo_cache:
             return self.photo_cache[key]
         path = PET_DIR / f"{stem}{'' if face == 1 else '_left'}.png"
@@ -158,6 +229,8 @@ class DesktopPet:
         img = Image.open(path).convert("RGBA")
         if face == -1 and not str(path).endswith("_left.png"):
             img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        if phase and motion:
+            img = motion_frame(img, motion, phase)
         img = img.resize((size, size), Image.LANCZOS)
         alpha = img.getchannel("A")
         matte = Image.new("RGBA", (size, size), WARM)
@@ -169,7 +242,7 @@ class DesktopPet:
         comp.save(tmp, "PNG")
         photo = tk.PhotoImage(file=str(tmp))
         self.photo_cache[key] = photo
-        if len(self.photo_cache) > 60:
+        if len(self.photo_cache) > 140:
             self.photo_cache.clear()
             self.photo_cache[key] = photo
         return photo
@@ -178,8 +251,25 @@ class DesktopPet:
         poses = POSES.get(str(self.cfg.get("species", "cat")), POSES["cat"])
         return poses.get(self.state, poses["idle"])
 
+    def frame_spec(self, now: float) -> tuple[str, int, str]:
+        """Return (stem, phase, motion) for the current instant.
+
+        Photo pets ship named frame loops in pet-config.json; built-ins use
+        the cached procedural motion frames so every pet actually moves.
+        """
+        anim = self.animations.get(self.state) if isinstance(self.animations, dict) else None
+        if anim and isinstance(anim, dict):
+            frames = anim.get("frames") or []
+            if frames:
+                fps = max(0.5, min(24.0, float(anim.get("fps", 4)))) * self.pace
+                i = int((now - self.state_start) * fps) % len(frames)
+                return str(frames[i]), 0, ""
+        phase = int((now - self.state_start) * 7 * self.pace) % PHASES
+        return self.sprite_stem(), phase, MOTION.get(self.state, "")
+
     def refresh_sprite(self, force: bool = False) -> None:
-        photo = self.build_photo(self.sprite_stem(), self.size, self.face)
+        stem, phase, motion = self.frame_spec(time.time())
+        photo = self.build_photo(stem, self.size, self.face, phase, motion)
         if force or getattr(self, "_photo", None) is not photo:
             self.canvas.itemconfigure(self.pet_item, image=photo)
             self._photo = photo
@@ -311,7 +401,7 @@ class DesktopPet:
             return
         win = tk.Toplevel(self.root)
         win.title("望崽宠乐园 · 设置")
-        win.geometry("330x420")
+        win.geometry("330x460")
         win.configure(bg="#fcf8f0")
         win.attributes("-topmost", True)
         self._settings_win = win
@@ -344,61 +434,78 @@ class DesktopPet:
         row("自动换动作", lambda r: tk.Checkbutton(win, variable=auto_var, bg="#fcf8f0"), 5)
         top_var = tk.BooleanVar(value=bool(self.cfg.get("topmost", True)))
         row("窗口置顶", lambda r: tk.Checkbutton(win, variable=top_var, bg="#fcf8f0"), 6)
+        pace_var = tk.DoubleVar(value=float(self.cfg.get("pace", 1) or 1))
+        row("动作节奏", lambda r: tk.Scale(win, from_=0.5, to=2.0, resolution=0.25,
+                                           orient="horizontal", variable=pace_var,
+                                           length=180, bg="#fcf8f0"), 7)
 
         def apply():
             self.cfg.update({
                 "name": name_var.get(), "species": species_var.get(),
                 "speed": speed_var.get(), "opacity": opacity_var.get(),
                 "auto": auto_var.get(), "topmost": top_var.get(),
+                "pace": pace_var.get(),
             })
-            self.persist({k: self.cfg[k] for k in ("name", "species", "speed", "opacity", "auto", "topmost")})
+            self.persist({k: self.cfg[k] for k in
+                          ("name", "species", "speed", "opacity", "auto", "topmost", "pace")})
+            self.pace = max(0.5, min(2.0, float(pace_var.get())))
             self.set_size(size_var.get())
             self.root.attributes("-topmost", top_var.get())
             try:
                 self.root.attributes("-alpha", opacity_var.get())
             except tk.TclError:
                 pass
+            self.state_start = time.time()
             self.refresh_sprite(force=True)
             self.show_bubble("好啦，都听你的～")
             win.destroy()
 
         tk.Button(win, text="保存并应用", command=apply, bg="#a65334", fg="white",
                   relief="flat", font=("Microsoft YaHei", 10), width=14, pady=5).grid(
-            row=7, column=0, columnspan=2, pady=14)
-        tk.Label(win, text="提示：拖动宠物可移动，滚轮调整大小，右键打开菜单。",
+            row=8, column=0, columnspan=2, pady=14)
+        tk.Label(win, text="右键可以直接点动作；它也会自己换姿势、散步、伸懒腰。",
                  bg="#fcf8f0", fg="#8a7a68", font=("Microsoft YaHei", 9),
-                 wraplength=290, justify="left").grid(row=8, column=0, columnspan=2, padx=16)
+                 wraplength=290, justify="left").grid(row=9, column=0, columnspan=2, padx=16)
 
     # ---------- state machine ----------
     def do_action(self, action: str, message: str = "", from_remote: bool = False) -> None:
+        now = time.time()
         if action in ("feed", "happy", "pet"):
             self.state = "happy"
-            self.state_until = time.time() + 2.2
+            self.state_until = now + 3.2
             self.spawn_hearts(5)
-            self.say(message or random.choice(["好舒服呀～", "嘿嘿，最喜欢你了！", "再摸一下嘛～"]))
+            self.say(message or random.choice(ACTION_LINES["happy"]))
         elif action == "sleep":
             self.state = "sleep"
-            self.state_until = time.time() + 30
-        elif action == "walk":
-            self.state = "walk"
-            self.state_until = time.time() + 18
-        elif action in ("stretch", "groom"):
-            self.state = action
-            self.state_until = time.time() + 3.5
+            self.state_until = now + 16
             if message:
                 self.say(message)
+        elif action == "walk":
+            self.state = "walk"
+            self.state_until = now + 10
+            if message:
+                self.say(message)
+        elif action in ("stretch", "groom"):
+            self.state = action
+            self.state_until = now + 4.2
+            if message or random.random() < 0.6:
+                self.say(message or random.choice(ACTION_LINES.get(action, [])))
         else:
             self.state = "idle"
             self.state_until = 0
             if message:
                 self.say(message)
-        self.last_auto = time.time()
+        self.state_start = now            # restart the animation loop
+        self.last_auto = now
+        self.next_auto = now + random.uniform(4, 9) / self.pace
         self.refresh_sprite()
         if not from_remote:
             self.persist({"action": self.state})
 
     def apply_config(self) -> None:
         self.cfg = load_config()
+        self.animations = self.cfg.get("animations") or {}
+        self.pace = max(0.5, min(2.0, float(self.cfg.get("pace", 1) or 1)))
         size = int(self.cfg.get("size", 220))
         if size != self.size:
             self.set_size(size)
@@ -444,17 +551,22 @@ class DesktopPet:
         # timed states
         if self.state_until and now > self.state_until:
             self.state, self.state_until = "idle", 0
+            self.state_start = now
             self.refresh_sprite()
 
-        # autonomous behaviour
-        if self.cfg.get("auto") and now - self.last_auto > random.uniform(11, 20) and self.state in ("idle", "walk"):
-            self.last_auto = now
-            pick = random.choice(["idle", "walk", "stretch", "groom", "walk", "sleep"])
+        # autonomous behaviour: it should feel like a little creature that
+        # keeps itself busy, not a sticker waiting for a click.
+        if (self.cfg.get("auto") and now > self.next_auto
+                and self.state in ("idle", "walk", "stretch", "groom")):
+            pick = random.choices(
+                ["idle", "walk", "stretch", "groom", "happy", "sleep"],
+                weights=[2, 3, 2, 2, 2, 1],
+            )[0]
             self.do_action(pick, from_remote=True)
             if pick == "idle" and random.random() < 0.5:
-                self.say()
+                self.say(random.choice(ACTION_LINES["idle"]))
 
-        # breathing / walking
+        # walking / idle drift
         if self.state == "walk":
             speed = max(1, int(self.cfg.get("speed", 2)))
             self.x += self.face * speed
@@ -464,12 +576,13 @@ class DesktopPet:
             if self.x > sw - self.size * 2 // 3:
                 self.x, self.face = sw - self.size * 2 // 3, -1
             self.apply_geometry()
-            bob = int(2 * math.sin(self.tick_n * 0.45))
-            self.canvas.coords(self.pet_item, self.size // 2, BUBBLE_H + self.size // 2 + bob)
-            self.refresh_sprite()
+            bob = int(3 * math.sin(self.tick_n * 0.45))
         else:
             bob = int(2.2 * math.sin(self.tick_n * 0.12))
-            self.canvas.coords(self.pet_item, self.size // 2, BUBBLE_H + self.size // 2 + bob)
+        self.canvas.coords(self.pet_item, self.size // 2, BUBBLE_H + self.size // 2 + bob)
+
+        # play the current action's frame loop every tick
+        self.refresh_sprite()
 
         # zzz
         if self.state == "sleep" and self.tick_n % 3 == 0:

@@ -264,33 +264,94 @@
     });
   }
 
-  /* Derive three extra poses from the visitor's own photo sticker so "my pet"
-     also animates instead of showing one frozen image. Transparent RGBA in,
-     transparent RGBA out; magenta-keying still happens later at export time.
-     Mirrors generate_action_frames.py so preview and export stay consistent. */
-  function derivePoses(canvas) {
-    const w = canvas.width, h = canvas.height;
-    const pose = (fn) => {
-      const cv = document.createElement('canvas');
-      cv.width = w; cv.height = h;
-      const ctx = cv.getContext('2d');
-      ctx.translate(w / 2, h / 2);
-      fn(ctx);
-      ctx.translate(-w / 2, -h / 2);
-      ctx.drawImage(canvas, 0, 0);
-      return cv;
+  /* ---------- real frame-by-frame animation for the visitor's own pet ----------
+     v1.5.0: the old derivePoses() produced ONE slightly rotated copy per
+     action, so the exported pet looked like a frozen sticker. We now render
+     full loops for six behaviours. The desktop engine reads the returned
+     `animations` map from pet-config.json and plays the frames at `fps`.
+     Transparent RGBA in, transparent RGBA out; magenta-keying (lite BAT
+     export) still happens later in export.js. */
+  function drawPose(src, opts) {
+    const cv = document.createElement('canvas');
+    cv.width = src.width; cv.height = src.height;
+    const c = cv.getContext('2d');
+    const w = cv.width, h = cv.height;
+    c.translate(w / 2 + (opts.dx || 0), h / 2 + (opts.dy || 0));
+    if (opts.rot) c.rotate(opts.rot * Math.PI / 180);
+    c.scale(opts.sx == null ? 1 : opts.sx, opts.sy == null ? 1 : opts.sy);
+    c.translate(-w / 2, -h / 2);
+    c.drawImage(src, 0, 0);
+    return cv;
+  }
+
+  const loopFrames = (n, fn) => Array.from({ length: n }, (_, i) => fn(i, n));
+
+  function buildAnimationFrames(src) {
+    const w = src.width, h = src.height;
+    const defs = {
+      // slow breathing, with one soft "blink" compression on frame 4
+      idle: { fps: 3, frames: loopFrames(6, (i) => {
+        const t = i / 6 * Math.PI * 2;
+        const blink = i === 4 ? 0.955 : 1;
+        return drawPose(src, {
+          sx: 1 + 0.026 * Math.sin(t) + (i === 4 ? 0.008 : 0),
+          sy: (1 + 0.028 * Math.sin(t)) * blink,
+          dy: 1.5 * Math.sin(t),
+        });
+      }) },
+      // alternating lean + bounce; the engine walks the window at the same time
+      walk: { fps: 7, frames: loopFrames(8, (i) => {
+        const t = i / 8 * Math.PI * 2;
+        return drawPose(src, {
+          rot: 5 * Math.sin(t), dy: -2.6 * Math.abs(Math.sin(t)),
+          sx: 1 + 0.012 * Math.cos(t), sy: 1 - 0.008 * Math.abs(Math.sin(t)),
+        });
+      }) },
+      // bottom-anchored stretch and relaxed return
+      stretch: { fps: 5, frames: loopFrames(6, (i) => {
+        const p = i / 5, k = Math.sin(p * Math.PI);
+        const sy = 1 + 0.18 * k, sx = 1 - 0.06 * k;
+        return drawPose(src, { sx, sy, dy: -(sy - 1) * h / 2 });
+      }) },
+      // head tilt / lick / back to centre
+      groom: { fps: 5, frames: loopFrames(6, (i) => {
+        const p = i / 5, k = Math.sin(p * Math.PI);
+        return drawPose(src, { rot: 12 * k, sy: 1 - 0.03 * k, dy: 2 * k });
+      }) },
+      // very slow breathing for the sleeping state (engine draws the Zzz)
+      sleep: { fps: 2, frames: loopFrames(6, (i) => {
+        const t = i / 6 * Math.PI * 2;
+        return drawPose(src, { sy: 1 + 0.022 * Math.sin(t), sx: 1 - 0.01 * Math.sin(t), dy: 1.2 * Math.sin(t) });
+      }) },
+      // two joyful hops per loop with a wiggle; engine adds floating hearts
+      happy: { fps: 8, frames: loopFrames(8, (i) => {
+        const p = i / 8, hop = Math.abs(Math.sin(p * 2 * Math.PI));
+        const s = 1 + 0.06 * hop;
+        return drawPose(src, { rot: 7 * Math.sin(p * 2 * Math.PI), sx: s, sy: s, dy: -10 * hop });
+      }) },
     };
+
+    const frames = {}, animations = {};
+    Object.keys(defs).forEach((act) => {
+      const def = defs[act];
+      const names = def.frames.map((_, i) => 'my-pet-' + act + '-' + i);
+      names.forEach((n, i) => { frames[n] = def.frames[i]; });
+      animations[act] = { frames: names, fps: def.fps, loop: true };
+    });
+    // Legacy single-frame names keep older engines and the lite runtime happy.
+    frames['my-pet'] = defs.idle.frames[0];
+    ['walk', 'stretch', 'groom'].forEach((a) => { frames['my-pet-' + a] = defs[a].frames[0]; });
+    return { frames, animations, count: Object.keys(frames).length };
+  }
+
+  /* Kept for the lite runtime and older callers. */
+  function derivePoses(canvas) {
+    const anim = buildAnimationFrames(canvas);
     return {
-      'my-pet':       canvas,
-      'my-pet-walk':  pose((c) => { c.rotate(4 * Math.PI / 180); c.scale(0.98, 0.98); }),
-      'my-pet-stretch': (() => {
-        const cv = document.createElement('canvas');
-        cv.width = w; cv.height = h;
-        const ctx = cv.getContext('2d');
-        ctx.drawImage(canvas, 0, h - Math.round(h * 1.16), w, Math.round(h * 1.16));
-        return cv;
-      })(),
-      'my-pet-groom': pose((c) => c.rotate(11 * Math.PI / 180)),
+      'my-pet': anim.frames['my-pet'],
+      'my-pet-walk': anim.frames['my-pet-walk'],
+      'my-pet-stretch': anim.frames['my-pet-stretch'],
+      'my-pet-groom': anim.frames['my-pet-groom'],
     };
   }
 
@@ -303,5 +364,5 @@
     });
   }
 
-  global.PET_PACK = { buildZip, magentaKey, sticker, preparePet, canvasPngBytes, derivePoses, loadImage };
+  global.PET_PACK = { buildZip, magentaKey, sticker, preparePet, canvasPngBytes, derivePoses, buildAnimationFrames, loadImage };
 })(window);

@@ -106,9 +106,44 @@
   function toast(msg) {
     const el = $('#toast');
     el.textContent = msg;
-    el.classList.add('show');
+    el.classList.add('is-show');
     clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('show'), 2600);
+    el._t = setTimeout(() => el.classList.remove('is-show'), 2600);
+  }
+
+  /* ---------------- motion helpers ---------------- */
+  function setOverlay(el, open) {
+    if (open) {
+      clearTimeout(el._hideT);
+      el.hidden = false;
+      requestAnimationFrame(() => el.classList.add('is-open'));
+    } else {
+      el.classList.remove('is-open');
+      clearTimeout(el._hideT);
+      el._hideT = setTimeout(() => {
+        if (!el.classList.contains('is-open')) el.hidden = true;
+      }, 240);
+    }
+  }
+
+  const _observed = new WeakSet();
+  function observeReveals() {
+    const els = Array.from(document.querySelectorAll('.reveal')).filter(
+      (el) => !el.classList.contains('is-visible') && !_observed.has(el)
+    );
+    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach((el) => el.classList.add('is-visible'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (en.isIntersecting) {
+          en.target.classList.add('is-visible');
+          io.unobserve(en.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -40px 0px', threshold: .08 });
+    els.forEach((el) => { _observed.add(el); io.observe(el); });
   }
 
   /* ---------------- preview ---------------- */
@@ -121,7 +156,10 @@
     // that mirrors the exported poses (stretch/lean). Built-in species already
     // swap to a real frame and therefore keep a neutral transform.
     img.style.transform = '';
-    img.style.transition = 'transform .45s cubic-bezier(.34,1.56,.64,1)';
+    // Crossfade the swap. A transition retargets on rapid clicks; keyframes would restart.
+    const petBox = $('#previewPet');
+    petBox.classList.add('is-swapping');
+    requestAnimationFrame(() => requestAnimationFrame(() => petBox.classList.remove('is-swapping')));
     if (state.species === 'my' && state.customUrl) {
       if (action === 'stretch') img.style.transform = 'scaleY(1.16) scaleX(.94) translateY(3%)';
       else if (action === 'groom') img.style.transform = 'rotate(11deg) scale(.96)';
@@ -132,9 +170,9 @@
     $('#previewTag').textContent = `${state.name} 在陪你`;
     const bubble = $('#previewBubble');
     bubble.textContent = ACTION_WORDS[action] || `${state.name} 来陪你啦`;
-    bubble.classList.add('show');
+    bubble.classList.add('is-show');
     clearTimeout(bubble._t);
-    bubble._t = setTimeout(() => bubble.classList.remove('show'), 2200);
+    bubble._t = setTimeout(() => bubble.classList.remove('is-show'), 2200);
   }
 
   function renderLines() {
@@ -191,7 +229,7 @@
     GALLERY.forEach((g) => {
       const card = document.createElement('button');
       card.type = 'button';
-      card.className = 'gallery-card';
+      card.className = 'gallery-card reveal';
       card.innerHTML = `<div class="gallery-media"><img src="${g.img}" alt="${g.name}" loading="lazy" /><span class="gallery-tag">${g.tag}</span></div><div class="gallery-meta"><b>${g.name}</b><span>免费定制 →</span></div>`;
       card.addEventListener('click', () => {
         state.species = g.species;
@@ -202,6 +240,7 @@
       });
       grid.appendChild(card);
     });
+    observeReveals();
   }
 
   /* ---------------- console ---------------- */
@@ -505,12 +544,12 @@
     const name = state.name || '望崽';
     $('#qrTitle').textContent = '扫码看「' + name + '」这只桌宠';
     $('#qrCodeImg').src = qrDataUrl(url, 480);
-    $('#qrOverlay').hidden = false;
+    setOverlay($('#qrOverlay'), true);
   }
-  function closeQr() { $('#qrOverlay').hidden = true; }
+  function closeQr() { setOverlay($('#qrOverlay'), false); }
 
-  function openContact() { $('#contactOverlay').hidden = false; }
-  function closeContact() { $('#contactOverlay').hidden = true; }
+  function openContact() { setOverlay($('#contactOverlay'), true); }
+  function closeContact() { setOverlay($('#contactOverlay'), false); }
 
   function bindQr() {
     $('#myQrBtn').addEventListener('click', openQr);
@@ -545,6 +584,7 @@
   function init() {
     const dbgQr = new URLSearchParams(location.search).get('qr');
     renderGallery();
+    observeReveals();
     bind();
     bindQr();
     initDrag();

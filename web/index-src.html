@@ -58,17 +58,17 @@
 
       <div class="species-strip">
         <span class="species-strip__label">选一只先试试：</span>
-        <button class="chip" data-species="cat">🐈 定制猫咪</button>
-        <button class="chip" data-species="dog">🐕 定制狗狗</button>
-        <button class="chip" data-species="rabbit">🐇 定制兔子</button>
-        <button class="chip" data-species="chinchilla">🐭 定制龙猫</button>
-        <button class="chip" data-species="hamster">🐹 定制仓鼠</button>
-        <button class="chip" data-species="bird">🐦 定制小鸟</button>
+        <button class="chip" data-species="cat">定制猫咪</button>
+        <button class="chip" data-species="dog">定制狗狗</button>
+        <button class="chip" data-species="rabbit">定制兔子</button>
+        <button class="chip" data-species="chinchilla">定制龙猫</button>
+        <button class="chip" data-species="hamster">定制仓鼠</button>
+        <button class="chip" data-species="bird">定制小鸟</button>
       </div>
     </div>
 
     <div class="hero-visual">
-      <div class="desktop-window">
+      <div class="desktop-window reveal">
         <div class="desktop-window__bar">
           <span class="dots"><i></i><i></i><i></i></span>
           <span class="window-title">我的桌面 · 实时预览</span>
@@ -76,7 +76,7 @@
         </div>
         <div class="desktop-screen" id="desktopScreen">
           <div class="desktop-icons" aria-hidden="true">
-            <span><b>📁</b>工作</span><span><b>🗒️</b>待办</span><span><b>🎵</b>歌单</span>
+            <span><b></b>工作</span><span><b></b>待办</span><span><b></b>歌单</span>
           </div>
           <div class="desktop-note" id="desktopNote">拖我一下，或者点我摸摸 ✋</div>
           <div class="preview-pet" id="previewPet" title="拖动我 / 点我摸摸">
@@ -93,7 +93,7 @@
   <!-- ============ GALLERY ============ -->
   <section class="section" id="gallery">
     <div class="container">
-      <div class="section-head">
+      <div class="section-head reveal">
         <div>
           <span class="eyebrow">欣赏一下大家做好的宠物吧</span>
           <h2>可爱是人类的共享资源。</h2>
@@ -115,7 +115,7 @@
         <p>它不占地方，<br />却总在角落里陪着你。</p>
       </div>
       <div class="stories-grid">
-        <article class="story-card">
+        <article class="story-card reveal">
           <div class="story-media">
             <img src="assets/home-process-cat.webp" alt="靠着休息的橘猫桌宠" />
             <span class="play-badge" aria-hidden="true">▶</span>
@@ -147,7 +147,7 @@
   <!-- ============ HOW ============ -->
   <section class="section" id="how">
     <div class="container">
-      <div class="section-head section-head--center">
+      <div class="section-head section-head--center reveal">
         <div>
           <span class="eyebrow">怎么做</span>
           <h2>只需三步，把它带到桌面。</h2>
@@ -156,7 +156,7 @@
       </div>
 
       <div class="how-grid">
-        <article class="how-card">
+        <article class="how-card reveal">
           <div class="how-num">01</div>
           <h3>挑形象、看动作</h3>
           <p class="text-soft"><b>选一只，或传照片</b> · 先看本领</p>
@@ -179,7 +179,7 @@
           <div class="how-foot"><span>清晰的照片效果更好</span><button class="text-link" data-open-console>上传我家照片 <span aria-hidden="true">↗</span></button></div>
         </article>
 
-        <article class="how-card how-card--accent">
+        <article class="how-card how-card--accent reveal">
           <div class="how-num">03</div>
           <h3>下载桌宠包，双击上桌</h3>
           <p class="text-soft"><b>它来陪你啦</b> · Windows 10 / 11</p>
@@ -258,32 +258,32 @@
     </div>
 
     <fieldset class="control-group">
-      <legend>基本</legend>
+      <legend data-step="01">基本</legend>
       <label class="field"><span>它的名字</span><input id="petName" type="text" maxlength="12" value="望崽" /></label>
       <label class="field"><span>形象</span>
         <select id="petSpecies">
-          <option value="cat">🐈 虎斑猫</option>
-          <option value="orange">🐈 橘猫</option>
-          <option value="dog">🐕 金毛</option>
-          <option value="rabbit">🐇 兔子</option>
-          <option value="chinchilla">🐭 龙猫</option>
-          <option value="hamster">🐹 仓鼠</option>
-          <option value="bird">🐦 小鸟</option>
-          <option value="my">📷 我家宠物（上传后可选）</option>
+          <option value="cat">虎斑猫</option>
+          <option value="orange">橘猫</option>
+          <option value="dog">金毛</option>
+          <option value="rabbit">兔子</option>
+          <option value="chinchilla">龙猫</option>
+          <option value="hamster">仓鼠</option>
+          <option value="bird">小鸟</option>
+          <option value="my">我家宠物（上传后可选）</option>
         </select>
       </label>
       <div class="species-preview"><img id="consolePetImg" src="assets/pet/cat_idle.png" alt="当前形象" /></div>
     </fieldset>
 
     <fieldset class="control-group">
-      <legend>看看它的本领</legend>
+      <legend data-step="02">看看它的本领</legend>
       <div class="action-grid">
-        <button class="action-btn" data-action="idle">😐 发呆</button>
-        <button class="action-btn" data-action="walk">🚶 散步</button>
-        <button class="action-btn" data-action="stretch">🙆 伸懒腰</button>
-        <button class="action-btn" data-action="groom">👅 舔毛毛</button>
-        <button class="action-btn" data-action="sleep">💤 睡觉</button>
-        <button class="action-btn" data-action="happy">💗 摸摸</button>
+        <button class="action-btn" data-action="idle">发呆</button>
+        <button class="action-btn" data-action="walk">散步</button>
+        <button class="action-btn" data-action="stretch">伸懒腰</button>
+        <button class="action-btn" data-action="groom">舔毛毛</button>
+        <button class="action-btn" data-action="sleep">睡觉</button>
+        <button class="action-btn" data-action="happy">摸摸</button>
       </div>
       <label class="field field--inline"><span>让它说</span><input id="sayText" type="text" maxlength="30" placeholder="例如：别熬太晚啦" /></label>
       <button class="btn btn-outline btn-block" id="sayBtn">加入台词表</button>
@@ -291,7 +291,7 @@
     </fieldset>
 
     <fieldset class="control-group">
-      <legend>手感</legend>
+      <legend data-step="03">手感</legend>
       <label class="slider-field"><span>大小 <b id="sizeValue">220</b></span><input id="petSize" type="range" min="100" max="420" step="10" value="220" /></label>
       <label class="slider-field"><span>走动速度 <b id="speedValue">2</b></span><input id="petSpeed" type="range" min="1" max="8" step="1" value="2" /></label>
       <div class="switch-row">
@@ -301,7 +301,7 @@
     </fieldset>
 
     <fieldset class="control-group">
-      <legend>换成你家那只</legend>
+      <legend data-step="04">换成你家那只</legend>
       <p class="group-hint">选一张正面、光线好的照片，会自动裁成柔和的圆形宠物贴纸。照片只在本机浏览器里处理。</p>
       <div class="upload-row">
         <label class="upload-btn">选择照片<input id="photoInput" type="file" accept="image/*" hidden /></label>
@@ -311,7 +311,7 @@
     </fieldset>
 
     <fieldset class="control-group export-group">
-      <legend>带上它回家</legend>
+      <legend data-step="05">带上它回家</legend>
       <p class="group-hint">生成一个 <b>免安装的 Windows 桌宠包</b>：BAT + 素材 + 配置，解压后双击 <code>start.bat</code> 即可上桌。不联网、不装 Python、可自由分享。</p>
       <button class="btn btn-primary btn-block" id="exportBtn">⬇ 免费生成桌宠包（.zip）</button>
       <a class="btn btn-outline btn-block exe-link" href="download/wangzai-pet-exe.zip" download>⬇ 或下载 EXE 完整版（17 MB）</a>

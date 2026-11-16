@@ -156,6 +156,30 @@
     });
   }
 
+  /* Derive extra poses from a visitor's own photo so "my pet" animates. */
+  function derivePoses(canvas) {
+    const w = canvas.width, h = canvas.height;
+    const pose = (fn) => {
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const ctx = cv.getContext('2d');
+      ctx.translate(w / 2, h / 2);
+      fn(ctx);
+      ctx.translate(-w / 2, -h / 2);
+      ctx.drawImage(canvas, 0, 0);
+      return cv;
+    };
+    const stretched = document.createElement('canvas');
+    stretched.width = w; stretched.height = h;
+    stretched.getContext('2d').drawImage(canvas, 0, h - Math.round(h * 1.16), w, Math.round(h * 1.16));
+    return {
+      'my-pet': canvas,
+      'my-pet-walk': pose((c) => { c.rotate(4 * Math.PI / 180); c.scale(0.98, 0.98); }),
+      'my-pet-stretch': stretched,
+      'my-pet-groom': pose((c) => c.rotate(11 * Math.PI / 180)),
+    };
+  }
+
   function loadImage(src) {
     return new Promise((resolve, reject) => {
       const im = new Image();
@@ -165,5 +189,5 @@
     });
   }
 
-  global.PET_PACK = { buildZip, magentaKey, sticker, canvasPngBytes, loadImage };
+  global.PET_PACK = { buildZip, magentaKey, sticker, canvasPngBytes, derivePoses, loadImage };
 })(window);

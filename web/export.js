@@ -16,9 +16,14 @@
 
     let count = 0;
     if (customCanvas) {
-      const cv = global.PET_PACK.magentaKey(customCanvas, 320);
-      files.push({ name: 'assets/pet/my-pet.png', data: await global.PET_PACK.canvasPngBytes(cv) });
-      count = 1;
+      // A visitor's own photo ships as four poses (idle/walk/stretch/groom)
+      // so it animates just like the built-in species.
+      const poses = global.PET_PACK.derivePoses(customCanvas);
+      for (const [name, source] of Object.entries(poses)) {
+        const cv = global.PET_PACK.magentaKey(source, 320);
+        files.push({ name: 'assets/pet/' + name + '.png', data: await global.PET_PACK.canvasPngBytes(cv) });
+        count++;
+      }
     } else {
       for (const n of names) {
         try {

@@ -24,11 +24,11 @@ PET_DIR = SKILL_ROOT / "assets" / "pet"
 SPRITES = {
     "cat":        ["cat_idle", "cat_walk", "cat_stretch", "cat_groom", "cat_sleep"],
     "orange":     ["orange_idle", "cat_walk", "cat_stretch", "cat_groom", "orange_sleep"],
-    "dog":        ["dog_idle", "dog_walk", "dog_sleep"],
-    "rabbit":     ["rabbit_idle", "rabbit_sleep"],
-    "chinchilla": ["chinchilla_idle", "chinchilla_sleep"],
-    "hamster":    ["hamster_idle", "hamster_sleep"],
-    "bird":       ["bird_idle", "bird_sleep"],
+    "dog":        ["dog_idle", "dog_walk", "dog_stretch", "dog_groom", "dog_sleep"],
+    "rabbit":     ["rabbit_idle", "rabbit_walk", "rabbit_stretch", "rabbit_groom", "rabbit_sleep"],
+    "chinchilla": ["chinchilla_idle", "chinchilla_walk", "chinchilla_stretch", "chinchilla_groom", "chinchilla_sleep"],
+    "hamster":    ["hamster_idle", "hamster_walk", "hamster_stretch", "hamster_groom", "hamster_sleep"],
+    "bird":       ["bird_idle", "bird_walk", "bird_stretch", "bird_groom", "bird_sleep"],
 }
 
 DEFAULT_LINES = ["在呢，一直都在。", "今天也要好好工作呀～", "摸摸我就有精神啦！", "别忘了喝水哦。"]

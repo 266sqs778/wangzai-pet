@@ -7,14 +7,18 @@
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
 
+  // Every species exposes the full ACTION_INDEX set (idle/walk/stretch/groom/sleep)
+  // so pressing an action always shows a distinct pose instead of clamping to
+  // idle or, worse, falling back to sleep. Cartoon poses are derived by
+  // generate_action_frames.py; see CHANGELOG.md for v1.1.0.
   const SPRITES = {
     cat:        ['cat_idle', 'cat_walk', 'cat_stretch', 'cat_groom', 'cat_sleep'],
     orange:     ['orange_idle', 'cat_walk', 'cat_stretch', 'cat_groom', 'orange_sleep'],
-    dog:        ['dog_idle', 'dog_walk', 'dog_idle', 'dog_sleep'],
-    rabbit:     ['rabbit_idle', 'rabbit_sleep'],
-    chinchilla: ['chinchilla_idle', 'chinchilla_sleep'],
-    hamster:    ['hamster_idle', 'hamster_sleep'],
-    bird:       ['bird_idle', 'bird_sleep'],
+    dog:        ['dog_idle', 'dog_walk', 'dog_stretch', 'dog_groom', 'dog_sleep'],
+    rabbit:     ['rabbit_idle', 'rabbit_walk', 'rabbit_stretch', 'rabbit_groom', 'rabbit_sleep'],
+    chinchilla: ['chinchilla_idle', 'chinchilla_walk', 'chinchilla_stretch', 'chinchilla_groom', 'chinchilla_sleep'],
+    hamster:    ['hamster_idle', 'hamster_walk', 'hamster_stretch', 'hamster_groom', 'hamster_sleep'],
+    bird:       ['bird_idle', 'bird_walk', 'bird_stretch', 'bird_groom', 'bird_sleep'],
     my:         ['my-pet'],
   };
   const NAMES = {
@@ -39,6 +43,54 @@
     syncGuard: false, drag: null, walkTimer: null,
   };
 
+  /* ---------------- sound feedback (Web Audio, no files) ---------------- */
+  /* Tiny synthesised blips so interactions feel alive without shipping any
+     audio or making a network request. Users can mute via #sfxToggle. */
+  const sfx = (() => {
+    let enabled = true;
+    let ctx = null;
+    try { enabled = localStorage.getItem('wz-sfx') !== 'off'; } catch (_) {}
+    function ac() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+    function tone(freq, dur, type = 'sine', vol = 0.05, delay = 0) {
+      if (!enabled) return;
+      const c = ac();
+      if (!c) return;
+      const t0 = c.currentTime + delay;
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    }
+    const api = {
+      isEnabled: () => enabled,
+      toggle() {
+        enabled = !enabled;
+        try { localStorage.setItem('wz-sfx', enabled ? 'on' : 'off'); } catch (_) {}
+        if (enabled) api.happy();
+        return enabled;
+      },
+      tap()    { tone(520, 0.09, 'sine', 0.05); },
+      happy()  { tone(620, 0.10, 'sine', 0.05); tone(880, 0.14, 'sine', 0.045, 0.09); },
+      action() { tone(440, 0.08, 'triangle', 0.045); tone(660, 0.10, 'triangle', 0.04, 0.07); },
+      done()   { tone(523, 0.10, 'sine', 0.05); tone(659, 0.10, 'sine', 0.05, 0.10); tone(784, 0.16, 'sine', 0.05, 0.20); },
+    };
+    return api;
+  })();
+
   const spriteFor = (species, action) => {
     const list = SPRITES[species] || SPRITES.cat;
     const idx = Math.min(ACTION_INDEX[action] ?? 0, list.length - 1);
@@ -62,8 +114,21 @@
   /* ---------------- preview ---------------- */
   function renderPreview(action) {
     const src = currentSrc(action);
-    $('#previewPetImg').src = src;
+    const img = $('#previewPetImg');
+    img.src = src;
     $('#consolePetImg').src = src;
+    // A visitor's own photo has no frame sheet, so animate it with a transform
+    // that mirrors the exported poses (stretch/lean). Built-in species already
+    // swap to a real frame and therefore keep a neutral transform.
+    img.style.transform = '';
+    img.style.transition = 'transform .45s cubic-bezier(.34,1.56,.64,1)';
+    if (state.species === 'my' && state.customUrl) {
+      if (action === 'stretch') img.style.transform = 'scaleY(1.16) scaleX(.94) translateY(3%)';
+      else if (action === 'groom') img.style.transform = 'rotate(11deg) scale(.96)';
+      else if (action === 'walk') img.style.transform = 'rotate(4deg) scale(.98)';
+      else if (action === 'happy') img.style.transform = 'scale(1.08)';
+      setTimeout(() => { img.style.transform = ''; }, 900);
+    }
     $('#previewTag').textContent = `${state.name} 在陪你`;
     const bubble = $('#previewBubble');
     bubble.textContent = ACTION_WORDS[action] || `${state.name} 来陪你啦`;
@@ -143,15 +208,28 @@
   function openConsole() {
     $('#console').hidden = false;
     $('#consoleOverlay').hidden = false;
+    // Trigger the slide-in transition on the next frame so it animates from
+    // translateX(102%) to 0 (CSS keys off .is-open, not [hidden]).
+    requestAnimationFrame(() => {
+      $('#console').classList.add('is-open');
+      $('#consoleOverlay').classList.add('is-open');
+    });
     document.body.classList.add('console-open');
     if (new URLSearchParams(location.search).has('s')) {
       try { history.replaceState(null, '', location.pathname + '?sharecode=' + currentShareCode()); } catch (e) {}
     }
   }
   function closeConsole() {
-    $('#console').hidden = true;
-    $('#consoleOverlay').hidden = true;
+    $('#console').classList.remove('is-open');
+    $('#consoleOverlay').classList.remove('is-open');
     document.body.classList.remove('console-open');
+    // Wait for the slide-out before hiding, otherwise the exit animation is cut.
+    setTimeout(() => {
+      if (!$('#console').classList.contains('is-open')) {
+        $('#console').hidden = true;
+        $('#consoleOverlay').hidden = true;
+      }
+    }, 400);
   }
 
   /* ---------------- drag preview ---------------- */
@@ -180,7 +258,7 @@
       d.moved = true;
     });
     pet.addEventListener('pointerup', () => {
-      if (state.drag && !state.drag.moved) renderPreview('happy');
+      if (state.drag && !state.drag.moved) { renderPreview('happy'); sfx.happy(); }
       state.drag = null;
       pet.classList.remove('is-dragging');
     });
@@ -265,6 +343,7 @@
 
       $('#packNote').textContent = `已生成：${count} 张动作图 + 配置 + 运行时。解压后双击 start.bat，${state.name} 就上桌啦。`;
       toast('桌宠包已下载 · 解压后双击 start.bat');
+      sfx.done();
     } catch (err) {
       toast('打包失败：' + (err && err.message ? err.message : '未知错误'));
     } finally {
@@ -312,12 +391,21 @@
     $$('.action-btn').forEach((b) => b.addEventListener('click', () => {
       state.action = b.dataset.action;
       renderPreview(state.action);
+      sfx.action();
     }));
     $$('.pose').forEach((b) => b.addEventListener('click', () => {
       state.action = b.dataset.action === 'stretch' ? 'stretch' : b.dataset.action === 'groom' ? 'groom' : 'idle';
       renderPreview(state.action);
+      sfx.action();
       toast('这是网页预览，导出后它也会这些本领');
     }));
+
+    const sfxBtn = $('#sfxToggle');
+    if (sfxBtn) {
+      const paint = () => { sfxBtn.textContent = sfx.isEnabled() ? '♪ 音效开' : '♪ 音效关'; };
+      paint();
+      sfxBtn.addEventListener('click', () => { sfx.toggle(); paint(); });
+    }
 
     $('#petName').addEventListener('input', (e) => {
       state.name = e.target.value.trim() || '望崽';

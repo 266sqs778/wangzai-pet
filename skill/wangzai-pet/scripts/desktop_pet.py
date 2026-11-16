@@ -47,12 +47,12 @@ DEFAULTS = {
 POSES = {
     "cat":     dict(idle="cat_idle", walk="cat_walk", stretch="cat_stretch", groom="cat_groom", sleep="cat_sleep", happy="cat_idle"),
     "orange":  dict(idle="orange_idle", walk="cat_walk", stretch="cat_stretch", groom="cat_groom", sleep="orange_sleep", happy="orange_idle"),
-    "dog":     dict(idle="dog_idle", walk="dog_walk", stretch="dog_idle", groom="dog_idle", sleep="dog_sleep", happy="dog_idle"),
-    "rabbit":  dict(idle="rabbit_idle", walk="rabbit_idle", stretch="rabbit_idle", groom="rabbit_idle", sleep="rabbit_sleep", happy="rabbit_idle"),
-    "chinchilla": dict(idle="chinchilla_idle", walk="chinchilla_idle", stretch="chinchilla_idle", groom="chinchilla_idle", sleep="chinchilla_sleep", happy="chinchilla_idle"),
-    "hamster": dict(idle="hamster_idle", walk="hamster_idle", stretch="hamster_idle", groom="hamster_idle", sleep="hamster_sleep", happy="hamster_idle"),
-    "bird":    dict(idle="bird_idle", walk="bird_idle", stretch="bird_idle", groom="bird_idle", sleep="bird_sleep", happy="bird_idle"),
-    "my":      dict(idle="my-pet", walk="my-pet", stretch="my-pet", groom="my-pet", sleep="my-pet", happy="my-pet"),
+    "dog":     dict(idle="dog_idle", walk="dog_walk", stretch="dog_stretch", groom="dog_groom", sleep="dog_sleep", happy="dog_idle"),
+    "rabbit":  dict(idle="rabbit_idle", walk="rabbit_walk", stretch="rabbit_stretch", groom="rabbit_groom", sleep="rabbit_sleep", happy="rabbit_idle"),
+    "chinchilla": dict(idle="chinchilla_idle", walk="chinchilla_walk", stretch="chinchilla_stretch", groom="chinchilla_groom", sleep="chinchilla_sleep", happy="chinchilla_idle"),
+    "hamster": dict(idle="hamster_idle", walk="hamster_walk", stretch="hamster_stretch", groom="hamster_groom", sleep="hamster_sleep", happy="hamster_idle"),
+    "bird":    dict(idle="bird_idle", walk="bird_walk", stretch="bird_stretch", groom="bird_groom", sleep="bird_sleep", happy="bird_idle"),
+    "my":      dict(idle="my-pet", walk="my-pet-walk", stretch="my-pet-stretch", groom="my-pet-groom", sleep="my-pet", happy="my-pet"),
 }
 
 ACTION_LABELS = {

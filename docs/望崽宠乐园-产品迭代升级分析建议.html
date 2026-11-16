@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>望崽宠乐园 · 产品迭代升级分析建议</title>
+<style>
+  :root{
+    --paper:#fcf8f0; --ink:#29231d; --muted:#6e6257; --soft:#f4e8dc;
+    --rule:#e0d2bf; --accent:#a65334; --green:#5e8364; --white:#fffdf8;
+    --gold:#c08a2e; --red:#b4462f; --blue:#4a6b8a; --shadow:0 14px 40px rgba(86,60,34,.10);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    line-height:1.75; font-size:15px;
+  }
+  .serif{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif}
+  .wrap{max-width:1040px; margin:0 auto; padding:0 26px 100px}
+  a{color:var(--accent); text-decoration:none}
+
+  /* cover */
+  .cover{padding:78px 0 46px; border-bottom:1px solid var(--rule); position:relative}
+  .cover .kicker{font-size:13px; letter-spacing:.22em; color:var(--accent); font-weight:700}
+  .cover h1{font-size:46px; line-height:1.2; margin:18px 0 10px; font-weight:800}
+  .cover h1 span{color:var(--accent)}
+  .cover .sub{font-size:17px; color:var(--muted); max-width:720px}
+  .cover .meta{margin-top:28px; display:flex; flex-wrap:wrap; gap:10px}
+  .cover .meta span{background:var(--soft); border:1px solid var(--rule); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--muted)}
+  .notice{margin-top:30px; background:#fbf1e2; border:1px solid var(--gold); border-left:4px solid var(--gold);
+    border-radius:12px; padding:14px 18px; font-size:13.5px; color:#6b4e1f}
+  .notice b{color:#8a5f18}
+
+  /* sections */
+  section{padding:48px 0 8px}
+  .sec-h{display:flex; align-items:baseline; gap:14px; margin-bottom:6px}
+  .sec-h .no{font-family:Georgia,serif; font-size:30px; color:var(--accent); font-weight:700; line-height:1}
+  .sec-h h2{font-size:27px; margin:0; font-weight:800}
+  .sec-desc{color:var(--muted); margin:0 0 26px; font-size:14px; max-width:820px}
+  .lead{background:var(--white); border:1px solid var(--rule); border-radius:16px; padding:22px 26px; box-shadow:var(--shadow)}
+  .lead p{margin:0 0 12px}
+  .lead p:last-child{margin-bottom:0}
+  .lead b{color:var(--accent)}
+
+  /* grid cards */
+  .grid{display:grid; gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--white); border:1px solid var(--rule); border-radius:16px; padding:20px 22px; box-shadow:var(--shadow)}
+  .card h3{margin:0 0 10px; font-size:17px}
+  .card p{margin:0; color:var(--muted); font-size:14px}
+  .card .tag{display:inline-block; font-size:11px; letter-spacing:.08em; padding:3px 9px; border-radius:6px;
+    background:var(--soft); color:var(--accent); font-weight:700; margin-bottom:10px}
+
+  /* score panel */
+  .scorewrap{display:grid; grid-template-columns:340px 1fr; gap:26px; align-items:start}
+  .radar-box{background:var(--white); border:1px solid var(--rule); border-radius:16px; padding:14px; box-shadow:var(--shadow)}
+  .radar-box svg{width:100%; height:auto; display:block}
+  .radar-cap{text-align:center; font-size:13px; color:var(--muted); padding:6px 0 2px}
+  .radar-cap b{color:var(--ink); font-size:22px; font-family:Georgia,serif}
+  .bars{background:var(--white); border:1px solid var(--rule); border-radius:16px; padding:22px 24px; box-shadow:var(--shadow)}
+  .bar-row{margin-bottom:13px}
+  .bar-row:last-child{margin-bottom:0}
+  .bar-top{display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px}
+  .bar-top .nm{font-weight:600}
+  .bar-top .sc{color:var(--muted); font-variant-numeric:tabular-nums}
+  .bar-track{height:9px; background:var(--soft); border-radius:999px; overflow:hidden}
+  .bar-fill{height:100%; border-radius:999px; background:var(--green); transition:width .8s ease}
+  .bar-fill.low{background:var(--red)} .bar-fill.mid{background:var(--gold)} .bar-fill.high{background:var(--green)}
+  .bar-row .wt{font-size:11px; color:var(--muted)}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto; border:1px solid var(--rule); border-radius:14px; background:var(--white); box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; font-size:13px; min-width:640px}
+  th,td{padding:12px 14px; text-align:left; border-bottom:1px solid var(--rule); vertical-align:top}
+  th{background:var(--soft); font-size:12px; letter-spacing:.03em; color:var(--muted); font-weight:700; white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  td.num{text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:middle}
+  .d-hi{background:var(--green)} .d-mid{background:var(--gold)} .d-low{background:var(--red)}
+  code{font-family:"JetBrains Mono",Consolas,monospace; background:var(--soft); padding:1px 5px; border-radius:4px; font-size:12px}
+
+  /* priority */
+  .prio{display:flex; flex-direction:column; gap:14px}
+  .p-item{background:var(--white); border:1px solid var(--rule); border-left-width:5px; border-radius:14px;
+    padding:16px 20px; box-shadow:var(--shadow)}
+  .p-item.p0{border-left-color:var(--red)} .p-item.p1{border-left-color:var(--accent)} .p-item.p2{border-left-color:var(--blue)}
+  .p-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .p-badge{font-size:11px; font-weight:800; letter-spacing:.06em; padding:3px 10px; border-radius:6px; color:#fff}
+  .p0 .p-badge{background:var(--red)} .p1 .p-badge{background:var(--accent)} .p2 .p-badge{background:var(--blue)}
+  .p-head h3{margin:0; font-size:16px; flex:1; min-width:200px}
+  .p-score{font-family:Georgia,serif; font-size:15px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .p-item p{margin:9px 0 0; color:var(--muted); font-size:13.5px}
+  .p-item .why{margin-top:8px; font-size:12.5px; color:var(--green)}
+  .p-item .why b{color:var(--green)}
+
+  /* roadmap */
+  .road{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+  .phase{background:var(--white); border:1px solid var(--rule); border-radius:16px; padding:18px; box-shadow:var(--shadow); position:relative}
+  .phase .num{font-family:Georgia,serif; font-size:13px; color:var(--accent); font-weight:700; letter-spacing:.1em}
+  .phase h4{margin:6px 0 12px; font-size:16px}
+  .phase ul{margin:0; padding-left:18px; color:var(--muted); font-size:13px}
+  .phase li{margin-bottom:7px}
+  .phase.a{border-top:3px solid var(--red)} .phase.b{border-top:3px solid var(--accent)}
+  .phase.c{border-top:3px solid var(--blue)} .phase.d{border-top:3px solid var(--green)}
+
+  /* advice detail */
+  .adv{display:flex; flex-direction:column; gap:12px}
+  .adv-row{display:grid; grid-template-columns:150px 1fr; gap:18px; background:var(--white);
+    border:1px solid var(--rule); border-radius:14px; padding:18px 20px; box-shadow:var(--shadow)}
+  .adv-row .lab{font-weight:800; color:var(--accent); font-size:15px}
+  .adv-row .lab small{display:block; font-weight:500; color:var(--muted); font-size:11.5px; margin-top:2px}
+  .adv-row ul{margin:0; padding-left:18px; font-size:13.5px}
+  .adv-row li{margin-bottom:6px}
+
+  footer{margin-top:60px; padding-top:24px; border-top:1px solid var(--rule); color:var(--muted); font-size:12.5px}
+  .legend{font-size:12px; color:var(--muted); margin-top:12px}
+  @media(max-width:860px){
+    .g2,.g3,.road{grid-template-columns:1fr}
+    .scorewrap{grid-template-columns:1fr}
+    .cover h1{font-size:34px}
+    .adv-row{grid-template-columns:1fr; gap:8px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker serif">产品复盘 · 迭代建议</div>
+    <h1 class="serif">望崽宠乐园<br><span>产品迭代升级分析建议</span></h1>
+    <p class="sub">以 GitHub 上高星桌面宠物 / 虚拟陪伴类开源项目为参照系，对当前产品的定位、体验、功能、工程与商业化做一次系统体检，并给出一套可量化、可排序的迭代建议。</p>
+    <div class="meta">
+      <span>出品：万界店长 · 模因公社</span>
+      <span>版本：分析稿 v1.0</span>
+      <span>日期：2026-11-16</span>
+      <span>性质：仅建议，不含执行</span>
+    </div>
+    <div class="notice">
+      <b>阅读须知：</b>本文档是一份「描述与阐述」性质的分析材料，<b>不对产品做任何实际改动</b>。文中所有评分、排序与建议均为基于现状代码和公开标杆项目的推演，供决策参考；是否落地、何时落地由你决定。
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-h"><span class="no">01</span><h2 class="serif">执行摘要</h2></div>
+    <p class="sec-desc">一句话结论先行，再展开论证。</p>
+    <div class="lead">
+      <p><b>这是一款"传播包装优秀、产品内核偏薄"的 MVP。</b>你 already 打通了从照片到桌宠的完整交付链路，品牌、情感文案和微信传播物料完成度很高——这是最值钱的资产。但把镜头拉近到"桌宠本体"，动作帧缺失、上传照片不会动、台词写死、无作品留存、仅支持 Windows，这些短板让核心承诺"会动的桌面小伙伴"打了折扣。</p>
+      <p>参照 GitHub 标杆项目可以看清差距所在：优秀项目普遍在<b>形象表现力（Live2D/3D/多格式动画）、交互规则系统、AI 陪伴深度、素材包生态、工具实用价值</b>五个方向拉开身位。而望崽目前这五项的平均分不足 1.5/5。</p>
+      <p>因此建议的迭代主轴是：<b>先补"可信度"（动作帧、版权、透明渲染），再补"陪伴感"（台词生成、音效、交互），最后补"生态与规模"（作品库、素材包、跨平台）</b>。按后文 RICE 机制排序，<b>素材版权合规、补齐动作帧、窄屏适配、音效反馈</b>是投入产出比最高的四项。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="no">02</span><h2 class="serif">评价机制：从 GitHub 标杆提炼的十个维度</h2></div>
+    <p class="sec-desc">评价维度不是拍脑袋定的，而是从下列高星开源项目的共性能力中归纳，再结合"照片 → 桌宠陪伴"这一核心定位加权。权重之和为 100%。</p>
+
+    <div class="tbl-wrap" style="margin-bottom:18px">
+      <table>
+        <thead><tr><th>标杆项目</th><th>技术栈</th><th>值得借鉴的核心思路</th></tr></thead>
+        <tbody>
+          <tr><td><b>duzexu/desktop-pet</b></td><td>Electron · 跨平台</td><td><code>.petpack</code> 素材包导入导出；GIF/WebP/WebM/MP4/SVG 多格式动画；<b>条件 + 动作 + 优先级 + 冷却</b>的可编排互动规则；独立控制面板；设置即时生效</td></tr>
+          <tr><td><b>oddmeta/charlotty（小美同学）</b></td><td>Electron + Live2D + PIXI</td><td>点击圆盘菜单聚合书签 / 待办 / 定时任务 / MCP 技能；<b>Web Audio 无文件音效</b>；边缘吸附 + 悬停预览；单实例锁定</td></tr>
+          <tr><td><b>guipie/pingyou（屏友）</b></td><td>Tauri 2 + Vue 3 + Rust</td><td>Live2D / 3D 双引擎；<b>全局键鼠动作同步</b>；多窗口架构 + 16ms IPC 节流；鼠标穿透；API Key 加密；自动更新</td></tr>
+          <tr><td><b>waterfeet/DoroPet</b></td><td>Live2D + Python</td><td>AI 对话 + 语音 + <b>养成系统</b>（饥饿/心情/能量）+ Galgame 叙事 + 长期记忆 + 明暗主题</td></tr>
+          <tr><td><b>UIU-Developers-Hub/desktop-pet</b></td><td>Python + PyQt6 + SQLite</td><td>本地优先 + 隐私克制；<b>主动式关怀</b>（待办到期、久坐、分心时主动提醒）；本地/云模型自动回退</td></tr>
+          <tr><td><b>wangeguo/pet</b></td><td>Rust + Bevy · 3D</td><td>AI Brain 理解交互意图、<b>动态生成行为脚本</b>；Replay 式确定性行为；跨平台</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid g3">
+      <div class="card"><span class="tag">评价原则 01</span><h3>先可信，再好玩</h3><p>宣传承诺与实际体验必须一致。动作、透明渲染、版权属于"可信度"，是留存的地板，优先级高于新增花哨功能。</p></div>
+      <div class="card"><span class="tag">评价原则 02</span><h3>陪伴感来自"回应"</h3><p>标杆项目共同点不是画面多炫，而是宠物会回应你——点击、悬停、对话、主动关怀。回应密度决定情感黏性。</p></div>
+      <div class="card"><span class="tag">评价原则 03</span><h3>成本要算在排序里</h3><p>用 RICE（触达 × 影响 × 信心 ÷ 成本）给迭代点排序，避免"什么都想做"导致资源摊薄，优先做低成本高感知项。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="no">03</span><h2 class="serif">现状体检：十维评分</h2></div>
+    <p class="sec-desc">每个维度按 0–5 分评估，右侧括号内为权重。综合加权得分 <b>2.45 / 5.00（约 49 分）</b>——典型 MVP 特征：定位与传播强，内核与工程薄。</p>
+
+    <div class="scorewrap">
+      <div class="radar-box">
+        <svg id="radar" viewBox="-46 -6 452 372" aria-label="十维能力雷达图"></svg>
+        <div class="radar-cap">综合加权得分 <b>2.45</b> / 5.00</div>
+      </div>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="legend">评分口径：5=行业标杆水准；4=成熟可用；3=基本满足；2=有明显短板；1=形同虚设；0=完全缺失。</div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="no">04</span><h2 class="serif">标杆对标：我们和头部项目差在哪</h2></div>
+    <p class="sec-desc">选取与望崽定位最接近的五个能力面做横向对比。可以看到：差距最大的不是"有没有"，而是"深不深"。</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>能力面</th><th>望崽现状</th><th>标杆做法</th><th>差距定性</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>形象表现力</b></td>
+            <td>PNG 序列帧，7 种形象，但多数只有 idle/sleep 两帧；上传照片仅单图</td>
+            <td>Live2D / 3D；GIF/WebP/MP4 多格式；默认/单次/循环/关键帧动画</td>
+            <td><span class="dot d-low"></span>代际差距</td>
+          </tr>
+          <tr>
+            <td><b>交互规则</b></td>
+            <td>点击、拖拽、右键菜单、随机动作台词</td>
+            <td>条件 + 动作 + 优先级 + 冷却的可编排规则；悬停、穿透、吸附、快捷键、全局键鼠同步</td>
+            <td><span class="dot d-low"></span>维度缺失</td>
+          </tr>
+          <tr>
+            <td><b>AI 陪伴</b></td>
+            <td>台词写死为 <code>DEFAULT_LINES</code>，无记忆、无主动关怀</td>
+            <td>LLM 对话、意图理解动态生成行为、长期记忆、主动 nudges</td>
+            <td><span class="dot d-low"></span>尚未开始</td>
+          </tr>
+          <tr>
+            <td><b>个性化 / 生态</b></td>
+            <td>名字/形象/台词/大小/速度可定制 + 分享码链接</td>
+            <td><code>.petpack</code> 素材包、模型广场、多宠物管理、UGC 导入导出</td>
+            <td><span class="dot d-mid"></span>有雏形</td>
+          </tr>
+          <tr>
+            <td><b>工具价值</b></td>
+            <td>基本为零，纯陪伴</td>
+            <td>待办、提醒、番茄钟、书签、技能调用（圆盘菜单聚合）</td>
+            <td><span class="dot d-low"></span>空白</td>
+          </tr>
+          <tr>
+            <td><b>数据连续性</b></td>
+            <td>URL 参数 + localStorage，关页即清空，无账号无云端</td>
+            <td>SQLite 本地库 + 云同步 + 聊天记录留存</td>
+            <td><span class="dot d-low"></span>短板</td>
+          </tr>
+          <tr>
+            <td><b>工程 / 平台</b></td>
+            <td>仅 Windows；色键透明有粉晕；三副本手工同步；单实例靠心跳</td>
+            <td>跨平台；真实 alpha 透明；单实例锁；16ms 节流；自动更新；凭据加密</td>
+            <td><span class="dot d-mid"></span>需加固</td>
+          </tr>
+          <tr>
+            <td><b>分发与品牌</b></td>
+            <td>单文件 HTML + 海报 + 分享码 + Pages；暖纸质品牌统一</td>
+            <td>安装包/绿色版/按需下载模型；在线官网 + 手册</td>
+            <td><span class="dot d-hi"></span>相对优势</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="no">05</span><h2 class="serif">迭代点排序：RICE 机制</h2></div>
+    <p class="sec-desc">排序公式：<code>RICE = 触达(1–10) × 影响(0.25/0.5/1/2/3) × 信心(0.5/0.8/1) ÷ 成本(人日)</code>。数值为相对口径，仅用于内部排序。安全类事项不参与常规排序，列为"立即处理"。</p>
+
+    <div class="tbl-wrap" style="margin-bottom:24px">
+      <table>
+        <thead><tr><th>序</th><th>迭代点</th><th class="num">触达</th><th class="num">影响</th><th class="num">信心</th><th class="num">成本(人日)</th><th class="num">RICE</th><th class="num">优先级</th></tr></thead>
+        <tbody id="rice-body"></tbody>
+      </table>
+    </div>
+
+    <div class="notice" style="margin-bottom:24px">
+      <b>安全项（立即处理，不计入排序）：</b>撤销此前泄露在对话中的 GitHub classic PAT（<code>ghp_…</code>，权限含 repo/workflow）。classic PAT 无 API 撤销端点，需本人到 GitHub Settings → Developer settings → Personal access tokens 手动删除并轮换。
+    </div>
+
+    <h3 class="serif" style="font-size:20px;margin:0 0 14px">优先级分组详解</h3>
+    <div class="prio" id="prio-list"></div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="no">06</span><h2 class="serif">分维度迭代建议</h2></div>
+    <p class="sec-desc">按你关心的 UI、使用、功能性、美观性等维度逐条展开。每条建议都标注"为什么"和"可怎么做的方向"，不涉及具体代码改动。</p>
+    <div class="adv">
+      <div class="adv-row"><div class="lab">UI 设计<small>界面与信息架构</small></div><ul>
+        <li>定制台在手机 / 窄屏应展开为全屏抽屉或独立页，而不是沿用桌面降级布局；当前主要面向桌面操作，移动端是明显缺口。</li>
+        <li>把"六种动作"从按钮组升级为带缩略帧的动作选择器，让"有哪些动作"一眼可见，同时倒逼动作帧补齐。</li>
+        <li>预览窗除了"模拟桌面窗口"，可增加明亮/暗色两档场景切换，呼应 DoroPet 的主题思路，低成本提升质感。</li>
+      </ul></div>
+      <div class="adv-row"><div class="lab">易用性<small>首次体验与操作路径</small></div><ul>
+        <li>上线"三步引导"：上传照片 → 选动作 → 一键带走。把当前分散在导航、画廊、抽屉里的入口收敛成一条主路径。</li>
+        <li>二维码与联系方式弹窗要做"扫码即达"验证：确保链接恒定携带分享码，避免历史上出现过的"页面开了但样式全废"事故。</li>
+        <li>导出包给出清晰的"打开方式"提示（BAT 可能被杀软拦截，优先推荐 EXE），降低首次运行挫败感。</li>
+      </ul></div>
+      <div class="adv-row"><div class="lab">功能性<small>能力广度与深度</small></div><ul>
+        <li><b>核心：</b>补齐非猫形象的 stretch/groom/happy 动作帧，并让"我家宠物"上传图也能生成 2–3 个简单动作（眨眼/摆动/呼吸缩放），兑现"会动"的承诺。</li>
+        <li>引入台词生成能力：把写死的 <code>DEFAULT_LINES</code> 升级为可接入 LLM 的个性化陪伴台词，并保留离线默认台词作为降级。</li>
+        <li>增加轻量工具价值：喝水提醒、番茄钟、待办气泡——与现有情感文案天然契合，是对标项目验证过的高黏性功能。</li>
+        <li>增加作品留存：本地作品库（多次定制可回看）+ 可选云短链（<code>?w=&lt;id&gt;</code> 替代超长 URL），解决"关页即清空"。</li>
+      </ul></div>
+      <div class="adv-row"><div class="lab">美观性<small>视觉与情感表达</small></div><ul>
+        <li>保持暖纸质 + 陶土橙的品牌调性，这是差异化资产；但需替换演示素材中所有网络来源图与用户截图，规避商用版权风险。</li>
+        <li>桌面端用真实 alpha 透明替代洋红色键，消除毛发边缘粉晕/黑边；透明像素不应抢占鼠标点击。</li>
+        <li>补充无外部文件的 Web Audio 音效（点击、菜单、爱心反馈），是标杆项目里"感知强、成本低"的典型项。</li>
+      </ul></div>
+      <div class="adv-row"><div class="lab">传播性<small>获客与留存闭环</small></div><ul>
+        <li>分享码门禁是最大单点风险：所有外发物料必须校验带码；同时维护一个无门禁的公开入口（如 GitHub Pages）作为兜底。</li>
+        <li>"我的分享码"当前丢失自定义照片（强制回落为猫），应明确提示用户，或改为"照片留在本地、分享默认形象"的诚实话术。</li>
+        <li>把海报、方图、纯二维码、分享文案做成"一键再生"工具，换域名/换活动时可自助更新，不必依赖人工重跑脚本。</li>
+      </ul></div>
+      <div class="adv-row"><div class="lab">工程与合规<small>可维护性与安全</small></div><ul>
+        <li>收敛三套副本（在线站 / 本地控制台 / Skill 包）为"一源多构建"，用脚本自动生成，消除人工同步漂移。</li>
+        <li>加固单实例判定（当前靠 1.5 秒心跳阈值，易误判），改用标准单实例锁。</li>
+        <li>尽快处理 PAT 泄露；若后续接云服务，API Key 须加密存储而非明文落盘。</li>
+        <li>中长期评估 macOS 版本（Tauri/Electron 迁移），解除"仅 Windows"的平台天花板。</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="no">07</span><h2 class="serif">建议路线图（分期，仅供决策）</h2></div>
+    <p class="sec-desc">按"先可信 → 再陪伴 → 后生态"的节奏拆分。每期都可独立交付、独立验证。</p>
+    <div class="road">
+      <div class="phase a"><div class="num">PHASE 0 · 立即</div><h4>止血与可信度</h4><ul>
+        <li>撤销泄露的 GitHub PAT</li>
+        <li>替换有版权风险的演示素材</li>
+        <li>补齐动作帧 / 修正"假动作"</li>
+        <li>上传照片至少生成 2 个动作</li>
+      </ul></div>
+      <div class="phase b"><div class="num">PHASE 1 · 近期</div><h4>体验与陪伴感</h4><ul>
+        <li>定制台窄屏全屏适配</li>
+        <li>Web Audio 音效反馈</li>
+        <li>LLM 个性化台词（带离线降级）</li>
+        <li>真实 alpha 透明渲染</li>
+      </ul></div>
+      <div class="phase c"><div class="num">PHASE 2 · 中期</div><h4>留存与工具价值</h4><ul>
+        <li>本地作品库 + 云短链</li>
+        <li>喝水提醒 / 番茄钟 / 待办</li>
+        <li>可编排互动规则系统</li>
+        <li>单实例锁 + 一源多构建</li>
+      </ul></div>
+      <div class="phase d"><div class="num">PHASE 3 · 远期</div><h4>生态与平台</h4><ul>
+        <li><code>.petpack</code> 素材包 + 宠物广场</li>
+        <li>多宠物同屏管理</li>
+        <li>自动更新与凭据加密</li>
+        <li>macOS 版本可行性评估</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="no">08</span><h2 class="serif">判断与提醒</h2></div>
+    <div class="grid g2">
+      <div class="card"><span class="tag">最该守住的优势</span><h3>传播链路与品牌情感</h3><p>照片到桌宠的完整交付、微信传播物料、统一的暖纸质品牌，是竞品少有的"开箱即传播"能力。迭代时不要为了堆功能稀释这条主线。</p></div>
+      <div class="card"><span class="tag">最该警惕的风险</span><h3>承诺与体验的落差</h3><p>"六种动作"实际多为 idle、上传照片不会动——这类落差会直接伤害口碑。可信度问题永远优先于新功能。</p></div>
+      <div class="card"><span class="tag">最该借的思路</span><h3>把"回应"做密</h3><p>头部项目证明：陪伴感来自回应密度而非画面精度。悬停、点击、音效、主动关怀，都是比 3D 建模更划算的投资。</p></div>
+      <div class="card"><span class="tag">最该先算的账</span><h3>三副本的维护税</h3><p>在线站、本地控制台、Skill 包长期手工同步，每次迭代都要改三处。若不尽早收敛为"一源多构建"，后续迭代成本会持续放大。</p></div>
+    </div>
+  </section>
+
+  <footer>
+    望崽宠乐园 · 产品迭代升级分析建议（分析稿 v1.0）　|　出品：万界店长 · 模因公社　|　2026-11-16<br>
+    本文档为分析阐述材料，未对产品代码、配置或线上内容做任何改动。评分与排序为相对推演，供决策参考。
+  </footer>
+
+</div>
+
+<script>
+// ---------- 十维评分数据 ----------
+const dims = [
+  {name:"核心创意与定位", score:4.5, wt:10},
+  {name:"形象表现力",     score:2.0, wt:12},
+  {name:"交互丰富度",     score:2.5, wt:10},
+  {name:"AI 陪伴深度",    score:1.0, wt:10},
+  {name:"个性化与创作",   score:3.0, wt:8 },
+  {name:"工具实用价值",   score:0.5, wt:6 },
+  {name:"数据连续性",     score:0.5, wt:8 },
+  {name:"工程与跨平台",   score:2.5, wt:10},
+  {name:"分发与传播",     score:3.5, wt:10},
+  {name:"视觉与品牌",     score:4.0, wt:10},
+];
+
+// ---------- 评分条 ----------
+const bars = document.getElementById('bars');
+const cls = s => s>=3.5?'high':(s>=2?'mid':'low');
+dims.forEach(d=>{
+  const row = document.createElement('div');
+  row.className='bar-row';
+  row.innerHTML = `<div class="bar-top"><span class="nm">${d.name} <span class="wt">(权重 ${d.wt}%)</span></span><span class="sc">${d.score.toFixed(1)} / 5</span></div>
+    <div class="bar-track"><div class="bar-fill ${cls(d.score)}" style="width:0%" data-w="${d.score/5*100}"></div></div>`;
+  bars.appendChild(row);
+});
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  document.querySelectorAll('.bar-fill').forEach(el=>el.style.width=el.dataset.w+'%');
+}));
+
+// ---------- 雷达图 ----------
+(function(){
+  const svg=document.getElementById('radar');
+  const NS='http://www.w3.org/2000/svg';
+  const cx=180, cy=176, R=128, n=dims.length;
+  const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  const pt=(i,r)=>{const ang=-Math.PI/2+i*2*Math.PI/n;return [cx+r*Math.cos(ang),cy+r*Math.sin(ang)];};
+  // rings
+  [1,2,3,4,5].forEach(lv=>{
+    const r=R*lv/5;
+    const pts=Array.from({length:n},(_,i)=>pt(i,r).map(v=>v.toFixed(1)).join(',')).join(' ');
+    svg.appendChild(el('polygon',{points:pts,fill:'none',stroke:'#e0d2bf','stroke-width':lv===5?1.4:0.8}));
+  });
+  // axes + labels
+  dims.forEach((d,i)=>{
+    const [x,y]=pt(i,R);
+    svg.appendChild(el('line',{x1:cx,y1:cy,x2:x,y2:y,stroke:'#e0d2bf','stroke-width':0.8}));
+    const [lx,ly]=pt(i,R+26);
+    let anchor='middle';
+    if(lx>cx+8)anchor='start'; else if(lx<cx-8)anchor='end';
+    const t=el('text',{x:lx,y:ly+4,'text-anchor':anchor,'font-size':10.5,fill:'#6e6257'});
+    t.textContent=d.name;
+    svg.appendChild(t);
+  });
+  // data polygon
+  const dpts=dims.map((d,i)=>pt(i,R*d.score/5).map(v=>v.toFixed(1)).join(',')).join(' ');
+  svg.appendChild(el('polygon',{points:dpts,fill:'rgba(166,83,52,.20)',stroke:'#a65334','stroke-width':2}));
+  dims.forEach((d,i)=>{
+    const [x,y]=pt(i,R*d.score/5);
+    svg.appendChild(el('circle',{cx:x,cy:y,r:3,fill:'#a65334'}));
+  });
+})();
+
+// ---------- RICE 数据 ----------
+const rice = [
+  {n:"素材版权合规替换（演示图/用户内容）", r:10,i:2,c:1,e:3},
+  {n:"补齐动作帧，消除「假动作」", r:9,i:3,c:1,e:5},
+  {n:"定制台窄屏 / 移动端全屏适配", r:5,i:2,c:1,e:2},
+  {n:"Web Audio 无文件音效反馈", r:7,i:1,c:1,e:2},
+  {n:"上传照片生成 2–3 个动作", r:8,i:3,c:0.8,e:8},
+  {n:"门禁稳健性 + 三副本收敛为一源多构建", r:7,i:2,c:0.8,e:6},
+  {n:"真实 alpha 透明替代色键", r:8,i:2,c:0.8,e:7},
+  {n:"本地作品库 + 云短链", r:7,i:3,c:0.8,e:10},
+  {n:"LLM 个性化台词生成", r:6,i:2,c:0.8,e:6},
+  {n:"悬停/穿透/吸附/快捷键 + 轻工具", r:7,i:2,c:0.8,e:9},
+  {n:"标准单实例锁 + 自动更新", r:6,i:1,c:0.8,e:5},
+  {n:".petpack 素材包 + 宠物广场", r:5,i:3,c:0.5,e:20},
+  {n:"多宠物同屏管理", r:4,i:1,c:0.8,e:10},
+  {n:"macOS 版本（Tauri 迁移）", r:5,i:2,c:0.5,e:30},
+];
+rice.forEach(x=>x.s=(x.r*x.i*x.c/x.e));
+rice.sort((a,b)=>b.s-a.s);
+const body=document.getElementById('rice-body');
+rice.forEach((x,idx)=>{
+  const p = x.s>=4?'P0':(x.s>=1.5?'P1':'P2');
+  const pc= p==='P0'?'p0':(p==='P1'?'p1':'p2');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td class="num">${idx+1}</td><td>${x.n}</td><td class="num">${x.r}</td><td class="num">${x.i}</td>
+    <td class="num">${x.c}</td><td class="num">${x.e}</td><td class="num"><b>${x.s.toFixed(2)}</b></td>
+    <td class="num"><span class="p-badge ${pc}" style="font-size:10px">${p}</span></td>`;
+  body.appendChild(tr);
+});
+
+// ---------- 优先级详解 ----------
+const prio = [
+  {p:"P0",t:"素材版权合规替换",s:"RICE 6.67",d:"展示素材中含网络来源图与小红书/抖音用户内容截图，商用前必须替换。这是上线商业化的法律前置，触达面最广、成本极低。",w:"为什么排第一：不做则一切增长都可能踩到版权雷。"},
+  {p:"P0",t:"补齐动作帧，消除「假动作」",s:"RICE 5.40",d:"狗/兔/龙猫/仓鼠/鸟多数只有 idle/sleep，点「伸懒腰/舔毛/摸摸」实际显示 idle。「会做六种动作」的宣传与实际不符。",w:"为什么排第二：直接兑现核心承诺，是口碑与留存的地板。"},
+  {p:"P1",t:"定制台窄屏 / 移动端全屏适配",s:"RICE 5.00",d:"当前移动端仅做降级适配，抽屉未全屏优化，而微信传播的主要场景正是手机。",w:"为什么靠前：成本仅 2 人日，却覆盖最大访问终端。"},
+  {p:"P1",t:"Web Audio 无文件音效反馈",s:"RICE 3.50",d:"为点击、菜单、爱心反馈加无外部文件的合成音效；charlotty 已验证这是「感知强、成本低」的典型项。",w:"为什么值得做：2 人日换明显的情感质感提升。"},
+  {p:"P1",t:"上传照片生成多动作",s:"RICE 2.40",d:"让「我家宠物」从单张静止图变成会眨眼/摆动的伙伴，直接用图像动效或简单形变实现，不必追求 Live2D 精度。",w:"为什么重要：这是产品的情感内核，值得单独投入。"},
+  {p:"P1",t:"门禁稳健性 + 一源多构建",s:"RICE 1.87",d:"分享码门禁是外部单点依赖，三副本靠人工同步易漂移；用脚本收敛为单一源码多端构建。",w:"为什么要做：降低每次迭代的维护税和线上事故概率。"},
+  {p:"P1",t:"真实 alpha 透明渲染",s:"RICE 1.83",d:"替代洋红色键，消除毛发边缘粉晕/黑边，并让透明像素不抢鼠标点击。",w:"为什么做：桌面宠物的第一眼质感由此决定。"},
+  {p:"P2",t:"本地作品库 + 云短链",s:"RICE 1.68",d:"解决「关页即清空」，用 <code>?w=&lt;id&gt;</code> 短链替代超长 URL；需配合云服务 Database。",w:"为什么靠后：价值高但成本大，且依赖后端就绪。"},
+  {p:"P2",t:"LLM 个性化台词生成",s:"RICE 1.60",d:"把写死的默认台词升级为可生成、带记忆的陪伴台词，保留离线降级；需配合云服务 LLM。",w:"为什么靠后：陪伴深度的关键，但边际收益需在前置可信度补齐后释放。"},
+  {p:"P2",t:"可编排互动规则 + 轻工具",s:"RICE 1.24",d:"借鉴标杆项目的「条件+动作+冷却」规则与喝水提醒/番茄钟/待办，提升工具黏性。",w:"为什么靠后：属于体验增量，等核心稳定后再铺开。"},
+  {p:"P2",t:"单实例锁 + 自动更新",s:"RICE 0.96",d:"替换 1.5 秒心跳判定为标准单实例锁，并给 EXE 加版本检测与一键更新。",w:"为什么靠后：工程质量加固，用户可感知度较低但必要。"},
+  {p:"P2",t:".petpack 素材包 + 宠物广场",s:"RICE 0.38",d:"开放素材包导入导出与社区分享，形成 UGC 生态；成本 20 人日，信心偏低。",w:"为什么排末尾：战略价值高但不适合当前阶段，作为远期方向。"},
+  {p:"P2",t:"多宠物同屏管理",s:"RICE 0.32",d:"支持同时养多只宠物，对标 DesktopFriends；当前用户价值尚不明确。",w:"为什么靠后：需求真伪需先验证。"},
+  {p:"P2",t:"macOS 版本（Tauri 迁移）",s:"RICE 0.17",d:"解除仅 Windows 的平台天花板；成本 30 人日、信心低，属长期方向。",w:"为什么最后：先验证产品价值，再谈平台扩张。"},
+];
+const pl=document.getElementById('prio-list');
+prio.forEach(x=>{
+  const d=document.createElement('div');
+  d.className='p-item '+x.p.toLowerCase();
+  d.innerHTML=`<div class="p-head"><span class="p-badge">${x.p}</span><h3>${x.t}</h3><span class="p-score">${x.s}</span></div>
+    <p>${x.d}</p><div class="why"><b>判断：</b>${x.w}</div>`;
+  pl.appendChild(d);
+});
+</script>
+</body>
+</html>

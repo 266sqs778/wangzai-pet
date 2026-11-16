@@ -406,3 +406,26 @@ input[type=checkbox]{accent-color:var(--accent)}
   .qr-grid{grid-template-columns:1fr 1fr}
   .qr-modal{padding:26px 18px 20px}
 }
+
+/* ============ v1.1.0: mobile-first customiser drawer ============ */
+/* On phones the customiser is the whole job, so let it own the full screen
+   instead of being a cramped side sheet over the landing page. */
+@media (max-width:560px){
+  .console{width:100vw;border-left:none;box-shadow:none}
+  .console-head{padding:20px 18px 16px}
+  .console-head h2{font-size:21px}
+  .console-body{padding:16px 18px calc(36px + env(safe-area-inset-bottom))}
+  .action-grid{grid-template-columns:repeat(3,1fr)}
+  .power-row .btn,.export-row .btn{min-height:44px}
+  .qr-code-box img{width:min(240px,72vw);height:auto}
+  /* Touch targets should be comfortable on small screens. */
+  .action-btn,.chip,.line-chip{padding-top:11px;padding-bottom:11px}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .console-head{padding:12px 18px 10px}
+  .console-body{padding-top:10px}
+}
+
+/* v1.1.0 sound toggle sits in the status row */
+.sfx-toggle{margin-left:auto;border:1px solid var(--rule);background:var(--white);color:var(--accent);border-radius:999px;padding:4px 11px;font-size:11px;cursor:pointer;white-space:nowrap;transition:background .2s,border-color .2s}
+.sfx-toggle:hover{background:var(--soft);border-color:var(--accent)}
